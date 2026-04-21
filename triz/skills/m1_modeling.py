@@ -12,7 +12,9 @@ M1_SYSTEM_PROMPT = """你是一个TRIZ功能分析专家。你的任务是将用
 2. resources: 可用资源，按类型分类（物质、场、空间、时间、信息、功能）
 3. ifr: 理想最终结果（Ideal Final Result），用一句话描述理想状态
 
-示例输出格式：
+【重要】直接输出JSON，不要输出任何其他内容（不要输出思考过程、分析说明等）：
+
+```json
 {
     "sao_list": [
         {"subject": "刀片", "action": "切割", "object": "纸张", "function_type": "useful"},
@@ -20,7 +22,8 @@ M1_SYSTEM_PROMPT = """你是一个TRIZ功能分析专家。你的任务是将用
     ],
     "resources": {"物质": ["刀片", "纸张"], "场": ["重力场"]},
     "ifr": "刀片在无限切割时自动保持锋利"
-}"""
+}
+```"""
 
 
 def model_function(ctx: WorkflowContext) -> dict:

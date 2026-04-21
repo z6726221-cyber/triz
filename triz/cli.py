@@ -4,6 +4,14 @@ import argparse
 from triz.orchestrator import Orchestrator
 from triz.database.init_db import init_database
 
+# 修复 Windows 终端中文编码
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 
 def main():
     parser = argparse.ArgumentParser(

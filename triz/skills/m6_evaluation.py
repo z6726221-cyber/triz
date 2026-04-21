@@ -19,15 +19,31 @@ M6_SYSTEM_PROMPT = """你是一个TRIZ方案评估专家。你的任务是独立
 
 同时，为每个方案综合计算 ideality_score (0.0-1.0)，并说明计算依据。
 
-输出格式（JSON数组，按理想度从高到低排序）：
+【重要】输出必须严格遵循以下JSON格式，每个字段都必须存在，不能省略任何字段：
+
+```json
 [
     {
-        "draft": {"title": "...", "description": "...", "applied_principles": [15], "resource_mapping": "..."},
-        "tags": {"feasibility_score": 4, "resource_fit_score": 5, "innovation_score": 4, "uniqueness_score": 3, "risk_level": "low", "ifr_deviation_reason": ""},
+        "title": "方案标题（原样复制输入的方案标题）",
+        "description": "方案描述（原样复制输入的方案描述）",
+        "applied_principles": [15],
+        "resource_mapping": "资源映射（原样复制）",
+        "feasibility_score": 4,
+        "resource_fit_score": 5,
+        "innovation_score": 4,
+        "uniqueness_score": 3,
+        "risk_level": "low",
+        "ifr_deviation_reason": "",
         "ideality_score": 0.78,
         "evaluation_rationale": "评分依据说明"
     }
-]"""
+]
+```
+
+注意：
+- 必须输出JSON数组，即使只有一个方案
+- title/description/applied_principles/resource_mapping 必须原样复制输入的方案信息
+- 所有评分字段都必须存在，不能省略"""
 
 
 def evaluate_solutions(ctx: WorkflowContext) -> dict:
@@ -66,9 +82,29 @@ def evaluate_solutions(ctx: WorkflowContext) -> dict:
     solutions = []
     unresolved_signals = []
 
-    for item in data if isinstance(data, list) else [data]:
-        draft_data = item.get("draft", {})
-        tags_data = item.get("tags", {})
+    items = data if isinstance(data, list) else [data]
+    for idx, item in enumerate(items):
+        # 兼容两种格式：扁平格式 和 嵌套 draft/tags 格式
+        if "draft" in item and isinstance(item["draft"], dict):
+            draft_data = item["draft"]
+            tags_data = item.get("tags", {})
+        else:
+            # 扁平格式：所有字段在同一层级
+            draft_data = item
+            tags_data = item
+
+        # Fallback: 如果 draft 字段为空，从 ctx.solution_drafts 取
+        title = draft_data.get("title", "")
+        description = draft_data.get("description", "")
+        applied_principles = draft_data.get("applied_principles", [])
+        resource_mapping = draft_data.get("resource_mapping", "")
+
+        if not title and idx < len(ctx.solution_drafts):
+            fallback_draft = ctx.solution_drafts[idx]
+            title = fallback_draft.title
+            description = description or fallback_draft.description
+            applied_principles = applied_principles or fallback_draft.applied_principles
+            resource_mapping = resource_mapping or fallback_draft.resource_mapping
 
         tags = QualitativeTags(
             feasibility_score=tags_data.get("feasibility_score", 3),
@@ -80,7 +116,7 @@ def evaluate_solutions(ctx: WorkflowContext) -> dict:
         )
 
         if tags.risk_level in ["high", "critical"]:
-            unresolved_signals.append(f"方案风险过高: {draft_data.get('title', '')}")
+            unresolved_signals.append(f"方案风险过高: {title}")
         if tags.ifr_deviation_reason:
             unresolved_signals.append(f"偏离IFR: {tags.ifr_deviation_reason}")
 
@@ -92,10 +128,10 @@ def evaluate_solutions(ctx: WorkflowContext) -> dict:
 
         sol = Solution(
             draft=SolutionDraft(
-                title=draft_data.get("title", ""),
-                description=draft_data.get("description", ""),
-                applied_principles=draft_data.get("applied_principles", []),
-                resource_mapping=draft_data.get("resource_mapping", ""),
+                title=title,
+                description=description,
+                applied_principles=applied_principles,
+                resource_mapping=resource_mapping,
             ),
             tags=tags,
             ideality_score=ideality,

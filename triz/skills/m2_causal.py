@@ -13,13 +13,16 @@ M2_SYSTEM_PROMPT = """你是一个TRIZ根因分析专家。你的任务是从给
 3. 找到根因节点（最根本的矛盾所在）
 4. 从根因节点提取候选物理属性
 
-你需要输出JSON格式：
+【重要】直接输出JSON，不要输出任何其他内容（不要输出思考过程、分析说明等）：
+
+```json
 {
     "root_param": "根因参数描述",
     "key_problem": "关键问题陈述",
     "candidate_attributes": ["属性1", "属性2"],
     "causal_chain": ["Level 0: 表面问题", "Level 1: 直接原因", "Level 2: 深层原因", "Level 3: 根因节点"]
-}"""
+}
+```"""
 
 
 def analyze_cause(ctx: WorkflowContext) -> dict:
