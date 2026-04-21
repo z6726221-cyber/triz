@@ -47,7 +47,7 @@
 [方案生成] (Skill, 内部 M5)
   |
   v
-[方案评估] (Skill+Tool, 内部 M6_LLM+M6_Sym)
+[方案评估] (Skill, 内部 M6_LLM)
   |
   v
 编排器内部 -> [M7 收敛控制] (Tool) -> CONTINUE / TERMINATE / CLARIFY
@@ -63,8 +63,7 @@
 | **矛盾求解** | M4_矛盾求解 | **Tool** | 双步参数映射匹配39参数ID，查矩阵/分离规则库 | 无 |
 | **跨界检索** | FOS_检索 | **Tool** | 本地案例库查询 -> 不足时调用 Google Patent Search API | 无 |
 | **方案生成** | M5_方案生成 | **Skill** | 将原理+跨界案例迁移到用户场景 | Call #3 |
-| **方案评估** | M6_LLM评估 | **Skill** | 独立实例对草案做4维定性打标 | Call #4 |
-| | M6_符号量化 | **Tool** | 理想度公式计算、排序、硬规则过滤 | 无 |
+| **方案评估** | M6_LLM评估 | **Skill** | 独立实例对草案做6维定性打标 + 量化排序 | Call #4 |
 | *(不可见)* | M7_收敛控制 | **Tool** | 四重阈值判定，输出控制指令 | 无 |
 | *(不可见)* | M2_门控 | **Tool** | 判断是否需要触发 M2（默认触发，仅当无SAO时跳过） | 无 |
 
@@ -121,7 +120,13 @@
 - `causal_chain: list[str]` - 因果链文本（用于展示）
 
 **边界处理**:
-- 因果链无法收敛时，以 M1 提取的表面矛盾作为 fallback
+- 因果链无法收敛时，编排器从 SAO 中的负面功能构造简化 fallback：
+  ```python
+  harmful_sao = find_first_harmful_sao(sao_list)
+  fallback_root_param = f"{harmful_sao.subject}的{harmful_sao.action}导致{harmful_sao.object}受损"
+  fallback_key_problem = f"{harmful_sao.action}过度"
+  fallback_candidate_attributes = [harmful_sao.action, harmful_sao.object]
+  ```
 - RCA 结果与 M1 SAO 矛盾时，优先采信 RCA 结果（根因更准确）
 
 ### 3.3 M3_问题定型（Tool）
@@ -336,25 +341,16 @@ return cases
 
 **核心逻辑**:
 
-**M6_LLM（Skill）- 定性打标**:
+**M6_LLM（Skill）- 定性评估与量化排序**:
 - 使用独立 LLM 实例（temperature=0.1，与 M5 的 0.3 不同）
-- 对每个草案做 4 维定性评估：
-  - 技术可行性（1-5）
-  - 资源匹配度（1-5）
-  - 风险等级（low/medium/high/critical）
-  - IFR 偏离原因（文本）
-
-**M6_Sym（Tool）- 符号量化**:
-```python
-# 理想度公式
-ideality = (0.5 * breakthrough_score + 0.3 * patent_potential) / (0.15 * cost_score + 0.05 * complexity_score)
-
-# 其中：
-# - breakthrough_score: 由 LLM 定性评估中的可行性 + 创新性综合推导
-# - patent_potential: 由方案的独特性和资源利用效率推导
-# - cost_score: 引入新资源数量越少分越低（成本越低）
-# - complexity_score: 实施步骤数量
-```
+- 对每个草案做 6 维定性评估 + 直接输出理想度分数：
+  - 技术可行性 feasibility（1-5）
+  - 资源匹配度 resource_fit（1-5）
+  - 创新性 innovation（1-5）
+  - 独特性 uniqueness（1-5）
+  - 风险等级 risk（low/medium/high/critical）
+  - IFR 偏离原因 ifr_deviation（文本）
+- LLM 基于上述评分综合计算理想度（0-1 浮点数），附带计算依据说明
 
 **输出**:
 - `ranked_solutions: list[Solution]`
@@ -367,8 +363,18 @@ ideality = (0.5 * breakthrough_score + 0.3 * patent_potential) / (0.15 * cost_sc
 - `unresolved_signals: list[str]` - 仍未解决的问题信号（用于 M7 判断）
 
 **边界处理**:
-- 所有方案 feasibility_flag=False 时，M7 将返回 CONTINUE 重新迭代
-- 理想度分数异常（>1.0 或 <0）时，归一化到 [0, 1]
+- LLM 理想度分数异常（>1.0 或 <0）时，归一化到 [0, 1]
+- 所有方案 risk_level="critical" 时，标记为不可行，M7 返回 CONTINUE 重新迭代
+- unresolved_signals 生成规则（由 M6 基于评估结果派生）：
+  ```python
+  unresolved_signals = []
+  for solution in ranked_solutions:
+      if solution.tags.risk_level in ["high", "critical"]:
+          unresolved_signals.append(f"方案风险过高: {solution.draft.title}")
+      if solution.tags.ifr_deviation_reason:
+          unresolved_signals.append(f"偏离IFR: {solution.tags.ifr_deviation_reason}")
+  # 若所有方案均存在未解决信号，取 top-3 最紧急的传入 M7
+  ```
 
 ### 3.8 M7_收敛控制（Tool，编排器内部调用）
 
@@ -447,8 +453,7 @@ def run_workflow(question: str, history: list = None) -> str:
 
         # 方案评估
         ctx = execute_node("方案评估", ctx, [
-            ("M6_LLM", m6_qualitative_eval, Skill),
-            ("M6_Sym", m6_quantitative_eval, Tool),
+            ("M6_LLM", m6_solution_evaluation, Skill),
         ])
 
         # 收敛控制（内部调用，不渲染为用户可见节点）
@@ -461,7 +466,7 @@ def run_workflow(question: str, history: list = None) -> str:
         elif decision.action == "CONTINUE":
             ctx.iteration += 1
             # 仅重跑矛盾求解及后续节点，保留问题建模结果
-            # 将评估反馈注入下一轮
+            # feedback 注入 M5 方案生成，调整生成策略
             ctx.feedback = decision.feedback
 ```
 
@@ -671,15 +676,16 @@ class SolutionDraft(BaseModel):
 class QualitativeTags(BaseModel):
     feasibility_score: int      # 1-5
     resource_fit_score: int     # 1-5
+    innovation_score: int       # 1-5
+    uniqueness_score: int       # 1-5
     risk_level: Literal["low", "medium", "high", "critical"]
     ifr_deviation_reason: str
 
 class Solution(BaseModel):
     draft: SolutionDraft
     tags: QualitativeTags
-    ideality_score: float       # 确定性公式计算
-    feasibility_flag: bool      # 硬规则拦截
-    evaluation_rationale: str
+    ideality_score: float       # LLM综合评分（0-1）
+    evaluation_rationale: str   # 评分依据说明
 
 class WorkflowContext(BaseModel):
     # 输入
@@ -700,7 +706,7 @@ class WorkflowContext(BaseModel):
     # M3 输出
     problem_type: Optional[Literal["tech", "phys"]] = None
     contradiction_desc: str = ""  # 矛盾自然语言描述
-    evidence: List[str] = []
+    evidence: List[str] = []  # 矛盾判定的支持证据（来自因果链）
 
     # M4 输出
     principles: List[int] = []
@@ -750,7 +756,7 @@ class ConvergenceDecision(BaseModel):
 | FOS API 调用失败 | 仅返回本地案例，不中断流程 |
 | M5 生成空草稿 | 返回 fallback 直接应用方案 |
 | M5 方案过于泛泛 | 要求 LLM 补充具体实现细节 |
-| M6 所有方案不可行 | M7 返回 CONTINUE 重新迭代 |
+| M6 所有方案风险=critical | M7 返回 CONTINUE 重新迭代 |
 | M7 理想度低于阈值 | 返回 CLARIFY |
 | 迭代超过最大次数(5) | 强制 TERMINATE，返回当前最优 |
 | OpenAI API 失败 | 重试 3 次后退出，保留已执行节点日志 |
@@ -793,7 +799,6 @@ triz/
 |   |-- m2_gate.py
 |   |-- m3_formulation.py
 |   |-- m4_solver.py
-|   |-- m6_sym.py
 |   |-- m7_convergence.py
 |   |-- fos_search.py
 |-- database/                # 数据库层
