@@ -773,7 +773,7 @@ class ConvergenceDecision(BaseModel):
 | 数据库 | SQLite |
 | 向量计算 | NumPy + 预计算 embedding |
 | CLI 框架 | Python `argparse` + 自定义交互循环 |
-| 外部 API | Google Patent Search API |
+| 外部 API | SerpApi (Google Patents) |
 | 日志/展示 | 标准输出 Markdown 渲染 |
 
 ---
