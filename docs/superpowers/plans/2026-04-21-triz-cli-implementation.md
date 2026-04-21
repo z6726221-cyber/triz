@@ -110,7 +110,7 @@ pytest-asyncio>=0.23.0
 ```bash
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_MODEL=gpt-4o-mini
-GOOGLE_PATENT_API_KEY=your_google_patent_api_key_here
+SERP_API_KEY=your_serpapi_key_here
 ```
 
 - [ ] **Step 4: Write triz/config.py**
@@ -128,7 +128,7 @@ DB_PATH = DATA_DIR / "triz_knowledge.db"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-GOOGLE_PATENT_API_KEY = os.getenv("GOOGLE_PATENT_API_KEY", "")
+SERP_API_KEY = os.getenv("SERP_API_KEY", "")
 
 MAX_ITERATIONS = 5
 MIN_IDEALITY_THRESHOLD = 0.3
@@ -1558,7 +1558,7 @@ Expected: FAIL
 ```python
 """FOS 跨界检索 Tool：本地案例库查询 -> Google Patent API 补充"""
 from triz.context import WorkflowContext, Case
-from triz.config import GOOGLE_PATENT_API_KEY
+from triz.config import SERP_API_KEY
 from triz.database.queries import query_cases
 
 
@@ -1576,10 +1576,10 @@ def search_cases(ctx: WorkflowContext) -> list[Case]:
     local_cases = query_cases(principles, function=function, limit=10)
     cases = [_db_row_to_case(c) for c in local_cases]
 
-    # L2: 如果本地不足 3 条，尝试 Google Patent API
-    if len(cases) < 3 and GOOGLE_PATENT_API_KEY:
+    # L2: 如果本地不足 3 条，尝试 SerpApi
+    if len(cases) < 3 and SERP_API_KEY:
         try:
-            patent_cases = _search_google_patents(principles, function, domain_hint)
+            patent_cases = _search_serpapi(principles, function, domain_hint)
             cases.extend(patent_cases)
         except Exception:
             # API 失败时不中断
@@ -1623,11 +1623,11 @@ def _db_row_to_case(row: dict) -> Case:
     )
 
 
-def _search_google_patents(principles: list, function: str, domain: str) -> list[Case]:
-    """调用 Google Patent Search API。
+def _search_serpapi(principles: list, function: str, domain: str) -> list[Case]:
+    """调用 SerpApi 搜索 Google Patents。
     MVP: 返回空列表（API 集成在后续迭代中实现）。
     """
-    # TODO: 实现 Google Patent API 调用
+    # TODO: 实现 SerpApi 调用
     # 当前返回空，不阻塞主流程
     return []
 ```
