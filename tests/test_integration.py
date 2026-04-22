@@ -4,7 +4,8 @@ import os
 from triz.context import WorkflowContext, SAO
 from triz.tools.m2_gate import should_trigger_m2
 from triz.tools.m3_formulation import formulate_problem
-from triz.tools.m4_solver import solve_contradiction
+from triz.tools.query_parameters import query_parameters
+from triz.tools.query_matrix import query_matrix
 from triz.tools.m7_convergence import check_convergence
 from triz.database.init_db import init_database
 
@@ -47,16 +48,19 @@ class TestDataFlow:
         assert result["problem_type"] == "tech"
         assert "热量" in result["contradiction_desc"] or "效率" in result["contradiction_desc"]
 
-    def test_m3_to_m4_solver(self):
-        ctx = WorkflowContext(question="test")
-        ctx.problem_type = "tech"
-        ctx.contradiction_desc = "改善速度，恶化形状稳定性"
-        ctx.candidate_attributes = ["速度", "形状"]
+    def test_m3_to_m4_subtools(self):
+        """M3 → M4 数据流：通过 sub-tools 查询矛盾矩阵"""
+        # Step 1: 查询参数
+        params = query_parameters(["速度", "形状"])
+        assert len(params) >= 2
+        improve = next(p for p in params if p["id"] == 9)
+        worsen = next(p for p in params if p["id"] == 12)
+        assert improve["name"] == "Speed"
+        assert worsen["name"] == "Shape"
 
-        result = solve_contradiction(ctx)
-        assert len(result["principles"]) > 0
-        assert result["improve_param_id"] == 9
-        assert result["worsen_param_id"] == 12
+        # Step 2: 查询矩阵
+        principles = query_matrix(improve["id"], worsen["id"])
+        assert len(principles) > 0
 
     def test_m6_to_m7_convergence(self):
         ctx = WorkflowContext(question="test")
