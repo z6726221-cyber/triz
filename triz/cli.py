@@ -75,14 +75,28 @@ class TRIZConsole:
         init_database()
         self.show_welcome()
 
+        # 检测终端是否支持 prompt_toolkit
+        use_prompt_toolkit = sys.stdin.isatty()
+        if use_prompt_toolkit:
+            try:
+                self._get_session()
+            except Exception:
+                use_prompt_toolkit = False
+                self.console.print(
+                    "[提示] 当前终端不支持高级交互，已回退到基础输入模式",
+                    style=STYLE_INFO,
+                )
+
         while True:
             try:
-                # 非 TTY 环境（如管道）不使用 patch_stdout
-                if sys.stdin.isatty():
-                    with patch_stdout():
+                if use_prompt_toolkit:
+                    try:
+                        with patch_stdout():
+                            user_input = self._get_session().prompt().strip()
+                    except Exception:
                         user_input = self._get_session().prompt().strip()
                 else:
-                    user_input = input().strip()
+                    user_input = input("> ").strip()
             except (EOFError, KeyboardInterrupt):
                 self.console.print("\n再见！", style=STYLE_INFO)
                 break
@@ -392,7 +406,11 @@ class TRIZConsole:
 
 
 def _run_single(question: str):
-    """单次执行模式（非交互，兼容旧用法）。"""
+    """单次执行模式（非交互）。"""
+    if not question or not question.strip():
+        Console().print("[错误] 问题不能为空，使用 -q 指定问题或直接进入交互模式", style=STYLE_ERROR)
+        sys.exit(1)
+
     console = Console()
     init_database()
     console.print(LOGO, style="bold bright_cyan")
@@ -411,16 +429,39 @@ def main():
         description="TRIZ 智能系统 CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("question", nargs="?", help="用户问题（单次模式）")
-    parser.add_argument("-i", "--interactive", action="store_true", help="交互会话模式")
+    parser.add_argument("-q", "--query", help="单次模式：直接输入问题并输出报告")
+    parser.add_argument("-f", "--file", help="从文件读取问题（单次模式）")
 
     args = parser.parse_args()
 
-    if args.interactive:
+    # 管道输入检测
+    if not sys.stdin.isatty():
+        try:
+            pipe_input = sys.stdin.read().strip()
+        except (OSError, IOError):
+            pipe_input = ""
+        if pipe_input:
+            _run_single(pipe_input)
+            return
+
+    # 单次模式：-q 或 -f
+    if args.query:
+        _run_single(args.query)
+    elif args.file:
+        try:
+            with open(args.file, "r", encoding="utf-8") as f:
+                question = f.read().strip()
+            _run_single(question)
+        except FileNotFoundError:
+            Console().print(f"[错误] 文件不存在: {args.file}", style=STYLE_ERROR)
+            sys.exit(1)
+        except Exception as e:
+            Console().print(f"[错误] 读取文件失败: {e}", style=STYLE_ERROR)
+            sys.exit(1)
+    else:
+        # 默认进入交互模式
         triz = TRIZConsole()
         triz.run()
-    else:
-        _run_single(args.question)
 
 
 if __name__ == "__main__":
