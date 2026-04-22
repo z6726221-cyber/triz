@@ -25,12 +25,14 @@ class SolutionDraft(BaseModel):
 
 
 class QualitativeTags(BaseModel):
-    feasibility_score: int      # 1-5
-    resource_fit_score: int     # 1-5
-    innovation_score: int       # 1-5
-    uniqueness_score: int       # 1-5
+    feasibility_score: int              # 1-5
+    resource_fit_score: int             # 1-5
+    innovation_score: int               # 1-5
+    uniqueness_score: int               # 1-5
     risk_level: Literal["low", "medium", "high", "critical"]
     ifr_deviation_reason: str
+    problem_relevance_score: int = 3     # 1-5: 方案与用户问题的匹配度
+    logical_consistency_score: int = 3   # 1-5: 方案描述是否自洽
 
 
 class Solution(BaseModel):

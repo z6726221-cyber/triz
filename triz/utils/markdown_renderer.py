@@ -109,8 +109,10 @@ def render_final_report(question: str, contradiction: str, solutions: list[Solut
     ]
 
     for i, sol in enumerate(solutions[:3], 1):
+        rel = sol.tags.problem_relevance_score
+        cons = sol.tags.logical_consistency_score
         lines.extend([
-            f"### 方案 {i} [理想度: {sol.ideality_score:.2f}]",
+            f"### 方案 {i} [理想度: {sol.ideality_score:.2f} | 问题匹配: {rel}/5 | 逻辑一致性: {cons}/5]",
             f"**原理**: {sol.draft.applied_principles}",
             f"**标题**: {sol.draft.title}",
             f"**描述**: {sol.draft.description}",

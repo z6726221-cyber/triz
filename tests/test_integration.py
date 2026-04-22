@@ -1,13 +1,26 @@
 """集成测试：验证完整 workflow 的数据流"""
 import pytest
 import os
-from triz.context import WorkflowContext, SAO
+from triz.context import WorkflowContext, SAO, Solution, SolutionDraft, QualitativeTags
 from triz.tools.m2_gate import should_trigger_m2
 from triz.tools.m3_formulation import formulate_problem
 from triz.tools.query_parameters import query_parameters
 from triz.tools.query_matrix import query_matrix
 from triz.tools.m7_convergence import check_convergence
 from triz.database.init_db import init_database
+
+
+def _make_solution(relevance=5, consistency=5, ideality=0.8):
+    return Solution(
+        draft=SolutionDraft(title="测试方案", description="测试描述",
+                           applied_principles=[1], resource_mapping="测试资源"),
+        tags=QualitativeTags(
+            feasibility_score=4, resource_fit_score=4, innovation_score=4,
+            uniqueness_score=3, risk_level="low", ifr_deviation_reason="",
+            problem_relevance_score=relevance, logical_consistency_score=consistency,
+        ),
+        ideality_score=ideality, evaluation_rationale="测试评估",
+    )
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -68,6 +81,7 @@ class TestDataFlow:
         ctx.iteration = 1
         ctx.unresolved_signals = []
         ctx.history_log = [{"max_ideality": 0.6}]
+        ctx.ranked_solutions = [_make_solution(relevance=5, consistency=5, ideality=0.8)]
 
         decision = check_convergence(ctx)
         assert decision.action == "TERMINATE"

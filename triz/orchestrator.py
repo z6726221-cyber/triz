@@ -264,6 +264,8 @@ class Orchestrator:
                                 uniqueness_score=item.get("uniqueness_score", 3),
                                 risk_level=item.get("risk_level", "medium"),
                                 ifr_deviation_reason=item.get("ifr_deviation_reason", ""),
+                                problem_relevance_score=item.get("problem_relevance_score", 3),
+                                logical_consistency_score=item.get("logical_consistency_score", 3),
                             )
                             converted.append(Solution(
                                 draft=draft, tags=tags,

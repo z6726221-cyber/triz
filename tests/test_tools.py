@@ -1,11 +1,35 @@
 import pytest
 import os
-from triz.context import WorkflowContext, SAO, ConvergenceDecision
+from triz.context import WorkflowContext, SAO, ConvergenceDecision, Solution, SolutionDraft, QualitativeTags
 from triz.tools.m3_formulation import formulate_problem
 from triz.tools.m7_convergence import check_convergence
 from triz.tools.m2_gate import should_trigger_m2
 from triz.tools.fos_search import search_cases
 from triz.database.init_db import init_database
+
+
+def _make_solution(relevance=5, consistency=5, ideality=0.7):
+    """辅助函数：创建测试用的 Solution"""
+    return Solution(
+        draft=SolutionDraft(
+            title="测试方案",
+            description="测试描述",
+            applied_principles=[1, 15],
+            resource_mapping="测试资源",
+        ),
+        tags=QualitativeTags(
+            feasibility_score=4,
+            resource_fit_score=4,
+            innovation_score=4,
+            uniqueness_score=3,
+            risk_level="low",
+            ifr_deviation_reason="",
+            problem_relevance_score=relevance,
+            logical_consistency_score=consistency,
+        ),
+        ideality_score=ideality,
+        evaluation_rationale="测试评估",
+    )
 
 
 # --- M3 问题定型 ---
@@ -54,6 +78,7 @@ def test_convergence_terminate_signals_cleared():
     ctx.iteration = 1
     ctx.unresolved_signals = []
     ctx.history_log = [{"max_ideality": 0.5}]
+    ctx.ranked_solutions = [_make_solution(relevance=5, consistency=5, ideality=0.7)]
 
     decision = check_convergence(ctx)
     assert decision.action == "TERMINATE"
@@ -66,18 +91,20 @@ def test_convergence_continue():
     ctx.iteration = 1
     ctx.unresolved_signals = ["风险过高"]
     ctx.history_log = [{"max_ideality": 0.3}]
+    ctx.ranked_solutions = [_make_solution(relevance=4, consistency=4, ideality=0.5)]
 
     decision = check_convergence(ctx)
     assert decision.action == "CONTINUE"
 
 
 def test_convergence_high_ideality_terminate():
-    """高理想度即使有未解决信号也提前终止"""
+    """高理想度即使有未解决信号也提前终止（前提是相关性和一致性通过）"""
     ctx = WorkflowContext(question="test")
     ctx.max_ideality = 0.86
     ctx.iteration = 0
     ctx.unresolved_signals = ["方案风险过高: XX"]
     ctx.history_log = []
+    ctx.ranked_solutions = [_make_solution(relevance=5, consistency=5, ideality=0.86)]
 
     decision = check_convergence(ctx)
     assert decision.action == "TERMINATE"
@@ -89,7 +116,8 @@ def test_convergence_clarify_low_ideality():
     ctx.max_ideality = 0.1
     ctx.iteration = 1
     ctx.unresolved_signals = ["风险过高"]
-    ctx.history_log = [{"max_ideality": 0.05}]  # 确保不触发停滞判定
+    ctx.history_log = [{"max_ideality": 0.05}]
+    ctx.ranked_solutions = [_make_solution(relevance=4, consistency=4, ideality=0.1)]
 
     decision = check_convergence(ctx)
     assert decision.action == "CLARIFY"
@@ -101,9 +129,38 @@ def test_convergence_max_iterations():
     ctx.iteration = 5
     ctx.unresolved_signals = ["风险过高"]
     ctx.history_log = [{"max_ideality": 0.6}, {"max_ideality": 0.65}, {"max_ideality": 0.7}]
+    ctx.ranked_solutions = [_make_solution(relevance=5, consistency=5, ideality=0.7)]
 
     decision = check_convergence(ctx)
     assert decision.action == "TERMINATE"
+
+
+def test_convergence_low_relevance_continue():
+    """问题相关性不足时强制 CONTINUE"""
+    ctx = WorkflowContext(question="test")
+    ctx.max_ideality = 0.8
+    ctx.iteration = 0
+    ctx.unresolved_signals = []
+    ctx.history_log = []
+    ctx.ranked_solutions = [_make_solution(relevance=2, consistency=5, ideality=0.8)]
+
+    decision = check_convergence(ctx)
+    assert decision.action == "CONTINUE"
+    assert "相关性不足" in decision.reason
+
+
+def test_convergence_low_consistency_continue():
+    """逻辑不一致时强制 CONTINUE"""
+    ctx = WorkflowContext(question="test")
+    ctx.max_ideality = 0.8
+    ctx.iteration = 0
+    ctx.unresolved_signals = []
+    ctx.history_log = []
+    ctx.ranked_solutions = [_make_solution(relevance=5, consistency=2, ideality=0.8)]
+
+    decision = check_convergence(ctx)
+    assert decision.action == "CONTINUE"
+    assert "逻辑不自洽" in decision.reason
 
 
 # --- M2 门控 ---
