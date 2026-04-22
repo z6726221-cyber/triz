@@ -241,6 +241,10 @@ class TRIZConsole:
                 step = self._nodes[-1]["steps"][-1]
                 step["status"] = "done"
                 step["result"] = data.get("result", {})
+                # Gate skip 标记
+                result = data.get("result", {})
+                if isinstance(result, dict) and result.get("skipped"):
+                    step["skipped"] = True
             self._render_node(self._nodes[-1])
 
         elif event_type == "step_error":
