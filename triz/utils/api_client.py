@@ -35,3 +35,18 @@ class OpenAIClient:
     def chat_structured(self, prompt: str, system_prompt: str = "", temperature: float = 0.7) -> str:
         """强制 JSON 输出模式。"""
         return self.chat(prompt, system_prompt, temperature, json_mode=True)
+
+    def chat_with_tools(self, messages: list, tools: list,
+                        temperature: float = 0.3):
+        """支持 function calling 的对话，返回原始 response 对象。
+
+        调用方需要检查 response.choices[0].message.tool_calls 来决定是否继续对话。
+        """
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            tools=tools,
+            tool_choice="auto",
+            temperature=temperature,
+        )
+        return response
