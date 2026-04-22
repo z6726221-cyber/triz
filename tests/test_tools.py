@@ -114,13 +114,26 @@ def test_convergence_terminate_signals_cleared():
 
 def test_convergence_continue():
     ctx = WorkflowContext(question="test")
-    ctx.max_ideality = 0.7
+    ctx.max_ideality = 0.5
     ctx.iteration = 1
     ctx.unresolved_signals = ["风险过高"]
-    ctx.history_log = [{"max_ideality": 0.5}]
+    ctx.history_log = [{"max_ideality": 0.3}]
 
     decision = check_convergence(ctx)
     assert decision.action == "CONTINUE"
+
+
+def test_convergence_high_ideality_terminate():
+    """高理想度即使有未解决信号也提前终止"""
+    ctx = WorkflowContext(question="test")
+    ctx.max_ideality = 0.86
+    ctx.iteration = 0
+    ctx.unresolved_signals = ["方案风险过高: XX"]
+    ctx.history_log = []
+
+    decision = check_convergence(ctx)
+    assert decision.action == "TERMINATE"
+    assert "较高水平" in decision.reason
 
 
 def test_convergence_clarify_low_ideality():

@@ -1,10 +1,13 @@
-"""M7 收敛控制 Tool：四重阈值判定"""
+"""M7 收敛控制 Tool：五重阈值判定"""
 from triz.context import WorkflowContext, ConvergenceDecision
 from triz.config import MAX_ITERATIONS, MIN_IDEALITY_THRESHOLD
 
+# 理想度足够高时提前终止的阈值
+HIGH_IDEALITY_THRESHOLD = 0.7
+
 
 def check_convergence(ctx: WorkflowContext) -> ConvergenceDecision:
-    """根据迭代状态做四重阈值判定。"""
+    """根据迭代状态做五重阈值判定。"""
     max_ideality = ctx.max_ideality
     iteration = ctx.iteration
     history = ctx.history_log
@@ -17,7 +20,14 @@ def check_convergence(ctx: WorkflowContext) -> ConvergenceDecision:
             reason="信号已清空，矛盾已充分解决"
         )
 
-    # 2. 停滞判定
+    # 2. 高理想度提前终止：理想度 >= 0.7 时即使有未解决信号也终止
+    if max_ideality >= HIGH_IDEALITY_THRESHOLD:
+        return ConvergenceDecision(
+            action="TERMINATE",
+            reason=f"理想度 {max_ideality} 已达到较高水平，方案质量可接受"
+        )
+
+    # 3. 停滞判定
     if iteration > 0 and history:
         last_ideality = history[-1].get("max_ideality", 0)
         if max_ideality == last_ideality:
@@ -26,7 +36,7 @@ def check_convergence(ctx: WorkflowContext) -> ConvergenceDecision:
                 reason=f"理想度停滞在 {max_ideality}，继续迭代无改善"
             )
 
-    # 3. 收益递减判定
+    # 4. 收益递减判定
     if iteration >= 2 and len(history) >= 2:
         prev_ideality = history[-2].get("max_ideality", 0)
         improvement = max_ideality - prev_ideality
@@ -36,21 +46,21 @@ def check_convergence(ctx: WorkflowContext) -> ConvergenceDecision:
                 reason=f"理想度改善率 {improvement:.3f} 低于阈值，收益递减"
             )
 
-    # 4. 触达上限判定
+    # 5. 触达上限判定
     if iteration >= MAX_ITERATIONS:
         return ConvergenceDecision(
             action="TERMINATE",
             reason=f"达到最大迭代次数 {MAX_ITERATIONS}"
         )
 
-    # 5. 理想度过低 -> CLARIFY
+    # 6. 理想度过低 -> CLARIFY
     if max_ideality < MIN_IDEALITY_THRESHOLD:
         return ConvergenceDecision(
             action="CLARIFY",
             reason=f"最高理想度 {max_ideality} 低于阈值 {MIN_IDEALITY_THRESHOLD}，需要用户补充信息"
         )
 
-    # 6. CONTINUE
+    # 7. CONTINUE
     feedback = _generate_feedback(signals, max_ideality)
     return ConvergenceDecision(
         action="CONTINUE",
