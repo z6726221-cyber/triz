@@ -94,13 +94,24 @@ class SkillRunner:
         return json.dumps(ctx.model_dump(), ensure_ascii=False, indent=2)
 
     def _parse_result(self, content: str | None) -> dict:
-        """解析 LLM 返回的 JSON。"""
+        """解析 LLM 返回的 JSON。支持 dict 和 list（list 会被包装为 {'result': list}）。"""
         if not content:
             return {}
         try:
-            return json.loads(content)
+            data = json.loads(content)
+            if isinstance(data, list):
+                # 如果返回的是数组，尝试找到已知的 list 字段名进行包装
+                # 否则包装为通用 result
+                return {"result": data}
+            return data
         except json.JSONDecodeError:
+            # 尝试从文本中提取 JSON
+            # 先尝试匹配 {...}
             match = re.search(r'\{.*\}', content, re.DOTALL)
             if match:
-                return json.loads(match.group())
+                return self._parse_result(match.group())
+            # 再尝试匹配 [...]
+            match = re.search(r'\[.*\]', content, re.DOTALL)
+            if match:
+                return self._parse_result(match.group())
             raise ValueError(f"无法解析 LLM 输出: {content[:200]}")

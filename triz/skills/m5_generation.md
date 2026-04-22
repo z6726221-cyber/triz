@@ -7,17 +7,19 @@
 无
 
 ## 输出格式
-直接输出以下 JSON 数组格式：
+直接输出以下 JSON 格式：
 
 ```json
-[
-    {
-        "title": "方案标题",
-        "description": "详细方案描述（具体、可执行，至少100字）",
-        "applied_principles": [15, 28],
-        "resource_mapping": "使用了哪些现有资源"
-    }
-]
+{
+    "solution_drafts": [
+        {
+            "title": "方案标题",
+            "description": "详细方案描述（具体、可执行，至少100字）",
+            "applied_principles": [15, 28],
+            "resource_mapping": "使用了哪些现有资源"
+        }
+    ]
+}
 ```
 
 ## 指令

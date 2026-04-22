@@ -7,25 +7,29 @@
 无
 
 ## 输出格式
-直接输出以下 JSON 数组格式：
+直接输出以下 JSON 格式：
 
 ```json
-[
-    {
-        "title": "方案标题（原样复制输入的方案标题）",
-        "description": "方案描述（原样复制输入的方案描述）",
-        "applied_principles": [15],
-        "resource_mapping": "资源映射（原样复制输入的资源映射）",
-        "feasibility_score": 4,
-        "resource_fit_score": 5,
-        "innovation_score": 4,
-        "uniqueness_score": 3,
-        "risk_level": "low",
-        "ifr_deviation_reason": "",
-        "ideality_score": 0.78,
-        "evaluation_rationale": "评分依据说明"
-    }
-]
+{
+    "ranked_solutions": [
+        {
+            "title": "方案标题（原样复制输入的方案标题）",
+            "description": "方案描述（原样复制输入的方案描述）",
+            "applied_principles": [15],
+            "resource_mapping": "资源映射（原样复制输入的资源映射）",
+            "feasibility_score": 4,
+            "resource_fit_score": 5,
+            "innovation_score": 4,
+            "uniqueness_score": 3,
+            "risk_level": "low",
+            "ifr_deviation_reason": "",
+            "ideality_score": 0.78,
+            "evaluation_rationale": "评分依据说明"
+        }
+    ],
+    "max_ideality": 0.78,
+    "unresolved_signals": []
+}
 ```
 
 ## 指令
@@ -44,8 +48,10 @@
 同时，为每个方案综合计算 ideality_score (0.0-1.0)，并说明计算依据。
 
 注意：
-- 必须输出 JSON 数组，即使只有一个方案
+- 必须输出包含 ranked_solutions 的 JSON 对象
 - title/description/applied_principles/resource_mapping 必须原样复制输入的方案信息
 - 所有评分字段都必须存在，不能省略
+- max_ideality 取 ranked_solutions 中最高 ideality_score
+- unresolved_signals: 收集所有风险为 high/critical 的方案标题，以及 ifr_deviation_reason 非空的记录
 
 【重要】直接输出 JSON，不要输出任何其他内容。

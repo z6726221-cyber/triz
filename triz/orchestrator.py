@@ -1,5 +1,5 @@
 """编排器核心：持有 WorkflowContext，按序调用 Skill/Tool，渲染 Markdown 输出"""
-from triz.context import WorkflowContext, ConvergenceDecision
+from triz.context import WorkflowContext, ConvergenceDecision, SAO, SolutionDraft, Solution, Case, QualitativeTags
 from triz.core.skill_runner import SkillRunner
 from triz.core.tool_registry import ToolRegistry
 from triz.tools.m2_gate import should_trigger_m2
@@ -196,10 +196,61 @@ class Orchestrator:
         return ctx
 
     def _merge_result(self, ctx: WorkflowContext, result: dict) -> WorkflowContext:
-        """将模块输出合并到 WorkflowContext。"""
+        """将模块输出合并到 WorkflowContext，自动将 dict 反序列化为 Pydantic 模型。"""
         for key, value in result.items():
-            if hasattr(ctx, key):
-                setattr(ctx, key, value)
+            if not hasattr(ctx, key):
+                continue
+
+            # 将 dict 列表反序列化为 Pydantic 模型对象
+            if key == "sao_list" and isinstance(value, list):
+                value = [
+                    SAO.model_validate(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            elif key == "cases" and isinstance(value, list):
+                value = [
+                    Case.model_validate(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            elif key == "solution_drafts" and isinstance(value, list):
+                value = [
+                    SolutionDraft.model_validate(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            elif key == "ranked_solutions" and isinstance(value, list):
+                converted = []
+                for item in value:
+                    if isinstance(item, dict):
+                        if "draft" in item and isinstance(item["draft"], dict):
+                            # 嵌套格式
+                            converted.append(Solution.model_validate(item))
+                        else:
+                            # 扁平格式 → 手动构造嵌套
+                            draft = SolutionDraft(
+                                title=item.get("title", ""),
+                                description=item.get("description", ""),
+                                applied_principles=item.get("applied_principles", []),
+                                resource_mapping=item.get("resource_mapping", ""),
+                            )
+                            tags = QualitativeTags(
+                                feasibility_score=item.get("feasibility_score", 3),
+                                resource_fit_score=item.get("resource_fit_score", 3),
+                                innovation_score=item.get("innovation_score", 3),
+                                uniqueness_score=item.get("uniqueness_score", 3),
+                                risk_level=item.get("risk_level", "medium"),
+                                ifr_deviation_reason=item.get("ifr_deviation_reason", ""),
+                            )
+                            converted.append(Solution(
+                                draft=draft,
+                                tags=tags,
+                                ideality_score=item.get("ideality_score", 0.5),
+                                evaluation_rationale=item.get("evaluation_rationale", ""),
+                            ))
+                    else:
+                        converted.append(item)
+                value = converted
+
+            setattr(ctx, key, value)
         return ctx
 
     def _generate_clarification(self, reason: str) -> str:
