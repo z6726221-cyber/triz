@@ -19,7 +19,7 @@ class SkillRunner:
     6. 解析最终 JSON 输出
     """
 
-    MAX_ROUNDS = 5
+    MAX_ROUNDS = 8
 
     def __init__(self, tool_registry: ToolRegistry):
         self.tool_registry = tool_registry
@@ -29,8 +29,15 @@ class SkillRunner:
         """获取 Skill 文件路径。"""
         return Path(__file__).parent.parent / "skills" / f"{skill_name}.md"
 
-    def run(self, skill_name: str, ctx: WorkflowContext) -> dict:
-        """执行指定 Skill，返回解析后的 dict。"""
+    def run(self, skill_name: str, ctx: WorkflowContext, require_tool_calls: bool = False) -> dict:
+        """执行指定 Skill，返回解析后的 dict。
+
+        Args:
+            skill_name: Skill 文件名（不含 .md）
+            ctx: WorkflowContext
+            require_tool_calls: 如果为 True，当 LLM 未调用任何 tool 直接返回结果时，
+                               会自动追加提示要求调用 tool 并重试一次
+        """
         skill_path = self._get_skill_path(skill_name)
         if not skill_path.exists():
             raise FileNotFoundError(f"Skill 文件不存在: {skill_path}")
@@ -44,7 +51,8 @@ class SkillRunner:
             {"role": "user", "content": user_prompt},
         ]
 
-        for _ in range(self.MAX_ROUNDS):
+        forced_retry = False
+        for round_idx in range(self.MAX_ROUNDS):
             response = self.client.chat_with_tools(
                 messages=messages,
                 tools=tools,
@@ -85,6 +93,23 @@ class SkillRunner:
                     })
             else:
                 # LLM 返回最终结果
+                # 如果要求必须调用 tools 且尚未调用过，强制重试一次
+                if require_tool_calls and not forced_retry and tools:
+                    forced_retry = True
+                    messages.append({
+                        "role": "assistant",
+                        "content": message.content or "",
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "你还没有调用任何工具来查询数据库。"
+                            "请根据工作流程调用必要的 Tools（query_parameters、query_matrix、query_separation），"
+                            "获取准确的发明原理后再输出最终结果。"
+                        ),
+                    })
+                    continue
+
                 return self._parse_result(message.content)
 
         raise RuntimeError(f"Skill '{skill_name}' 执行超过最大轮数 {self.MAX_ROUNDS}")

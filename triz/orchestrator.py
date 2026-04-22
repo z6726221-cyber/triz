@@ -198,7 +198,9 @@ class Orchestrator:
 
             try:
                 if step_type == "Skill":
-                    result = self.skill_runner.run(step_name, ctx)
+                    # M4 必须调用 Tools 才能获取正确结果
+                    require_tools = step_name == "m4_solver"
+                    result = self.skill_runner.run(step_name, ctx, require_tool_calls=require_tools)
                 else:
                     result = step_func(ctx)
             except Exception as e:
