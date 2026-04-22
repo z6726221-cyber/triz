@@ -29,7 +29,8 @@ class SkillRunner:
         """获取 Skill 文件路径。"""
         return Path(__file__).parent.parent / "skills" / f"{skill_name}.md"
 
-    def run(self, skill_name: str, ctx: WorkflowContext, require_tool_calls: bool = False) -> dict:
+    def run(self, skill_name: str, ctx: WorkflowContext,
+            require_tool_calls: bool = False, model: str = None) -> dict:
         """执行指定 Skill，返回解析后的 dict。
 
         Args:
@@ -37,6 +38,7 @@ class SkillRunner:
             ctx: WorkflowContext
             require_tool_calls: 如果为 True，当 LLM 未调用任何 tool 直接返回结果时，
                                会自动追加提示要求调用 tool 并重试一次
+            model: 临时指定模型名称（如 M5 用 DeepSeek，M6 用 Kimi）
         """
         skill_path = self._get_skill_path(skill_name)
         if not skill_path.exists():
@@ -57,6 +59,7 @@ class SkillRunner:
                 messages=messages,
                 tools=tools,
                 temperature=0.3,
+                model=model,
             )
 
             message = response.choices[0].message
@@ -125,18 +128,21 @@ class SkillRunner:
         try:
             data = json.loads(content)
             if isinstance(data, list):
-                # 如果返回的是数组，尝试找到已知的 list 字段名进行包装
-                # 否则包装为通用 result
                 return {"result": data}
             return data
         except json.JSONDecodeError:
-            # 尝试从文本中提取 JSON
-            # 先尝试匹配 {...}
-            match = re.search(r'\{.*\}', content, re.DOTALL)
-            if match:
-                return self._parse_result(match.group())
-            # 再尝试匹配 [...]
-            match = re.search(r'\[.*\]', content, re.DOTALL)
-            if match:
-                return self._parse_result(match.group())
-            raise ValueError(f"无法解析 LLM 输出: {content[:200]}")
+            pass
+
+        # 从文本中扫描提取 JSON（避免递归，防止无限循环）
+        decoder = json.JSONDecoder()
+        for i, char in enumerate(content):
+            if char in "{[":
+                try:
+                    data, _ = decoder.raw_decode(content, i)
+                    if isinstance(data, list):
+                        return {"result": data}
+                    return data
+                except json.JSONDecodeError:
+                    continue
+
+        raise ValueError(f"无法解析 LLM 输出: {content[:200]}")

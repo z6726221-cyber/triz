@@ -10,6 +10,14 @@ DB_PATH = DATA_DIR / "triz_knowledge.db"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+
+# 各 Skill 可独立配置模型（如果不配置，默认使用 MODEL_NAME）
+MODEL_M1 = os.getenv("MODEL_M1", MODEL_NAME)
+MODEL_M2 = os.getenv("MODEL_M2", MODEL_NAME)
+MODEL_M4 = os.getenv("MODEL_M4", MODEL_NAME)
+MODEL_M5 = os.getenv("MODEL_M5", MODEL_NAME)
+MODEL_M6 = os.getenv("MODEL_M6", MODEL_NAME)
+
 SERP_API_KEY = os.getenv("SERP_API_KEY", "")
 
 MAX_ITERATIONS = 5

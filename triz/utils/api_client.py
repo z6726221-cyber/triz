@@ -37,13 +37,17 @@ class OpenAIClient:
         return self.chat(prompt, system_prompt, temperature, json_mode=True)
 
     def chat_with_tools(self, messages: list, tools: list,
-                        temperature: float = 0.3):
+                        temperature: float = 0.3,
+                        model: str = None):
         """支持 function calling 的对话，返回原始 response 对象。
 
         调用方需要检查 response.choices[0].message.tool_calls 来决定是否继续对话。
+
+        Args:
+            model: 可临时覆盖默认模型（用于不同 Skill 使用不同模型）
         """
         response = self.client.chat.completions.create(
-            model=self.model,
+            model=model or self.model,
             messages=messages,
             tools=tools,
             tool_choice="auto",

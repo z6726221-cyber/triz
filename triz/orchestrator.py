@@ -10,6 +10,16 @@ from triz.tools.query_parameters import query_parameters
 from triz.tools.query_matrix import query_matrix
 from triz.tools.query_separation import query_separation
 from triz.utils.markdown_renderer import render_final_report
+from triz.config import MODEL_M1, MODEL_M2, MODEL_M4, MODEL_M5, MODEL_M6
+
+# Skill → Model 映射
+SKILL_MODEL_MAP = {
+    "m1_modeling": MODEL_M1,
+    "m2_causal": MODEL_M2,
+    "m4_solver": MODEL_M4,
+    "m5_generation": MODEL_M5,
+    "m6_evaluation": MODEL_M6,
+}
 
 
 def _register_m4_tools() -> ToolRegistry:
@@ -200,7 +210,12 @@ class Orchestrator:
                 if step_type == "Skill":
                     # M4 必须调用 Tools 才能获取正确结果
                     require_tools = step_name == "m4_solver"
-                    result = self.skill_runner.run(step_name, ctx, require_tool_calls=require_tools)
+                    model = SKILL_MODEL_MAP.get(step_name)
+                    result = self.skill_runner.run(
+                        step_name, ctx,
+                        require_tool_calls=require_tools,
+                        model=model,
+                    )
                 else:
                     result = step_func(ctx)
             except Exception as e:
