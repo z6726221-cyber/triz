@@ -1,4 +1,4 @@
-"""编排器核心：持有 WorkflowContext，按序调用 Skill/Tool，渲染 Markdown 输出"""
+"""编排器核心：持有 WorkflowContext，按序调用 Skill/Tool，支持回调通知。"""
 from triz.context import WorkflowContext, ConvergenceDecision, SAO, SolutionDraft, Solution, Case, QualitativeTags
 from triz.core.skill_runner import SkillRunner
 from triz.core.tool_registry import ToolRegistry
@@ -9,91 +9,89 @@ from triz.tools.fos_search import search_cases
 from triz.tools.query_parameters import query_parameters
 from triz.tools.query_matrix import query_matrix
 from triz.tools.query_separation import query_separation
-from triz.utils.markdown_renderer import (
-    render_node_start, render_step_complete,
-    render_node_complete, render_final_report
-)
+from triz.utils.markdown_renderer import render_final_report
 
 
 def _register_m4_tools() -> ToolRegistry:
     """注册 M4 Skill 可调用的 sub-tools。"""
     registry = ToolRegistry()
-
     registry.register(
         name="query_parameters",
         func=query_parameters,
         schema={
             "name": "query_parameters",
-            "description": "根据关键词查询 39 个 TRIZ 工程参数，返回最匹配的参数 ID 和名称",
+            "description": "根据关键词查询 39 个 TRIZ 工程参数",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "keywords": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "描述改善/恶化参数的关键词列表，如 ['速度', '形状']",
-                    }
+                    "keywords": {"type": "array", "items": {"type": "string"}}
                 },
                 "required": ["keywords"],
             },
         }
     )
-
     registry.register(
         name="query_matrix",
         func=query_matrix,
         schema={
             "name": "query_matrix",
-            "description": "查询阿奇舒勒矛盾矩阵，给定改善参数和恶化参数，返回推荐的发明原理",
+            "description": "查询阿奇舒勒矛盾矩阵",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "improve_param_id": {
-                        "type": "integer",
-                        "description": "改善参数 ID (1-39)",
-                    },
-                    "worsen_param_id": {
-                        "type": "integer",
-                        "description": "恶化参数 ID (1-39)",
-                    },
+                    "improve_param_id": {"type": "integer"},
+                    "worsen_param_id": {"type": "integer"},
                 },
                 "required": ["improve_param_id", "worsen_param_id"],
             },
         }
     )
-
     registry.register(
         name="query_separation",
         func=query_separation,
         schema={
             "name": "query_separation",
-            "description": "查询物理矛盾的分离原理，给定矛盾描述，返回分离类型和推荐原理",
+            "description": "查询物理矛盾的分离原理",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "contradiction_desc": {
-                        "type": "string",
-                        "description": "物理矛盾的自然语言描述",
-                    }
+                    "contradiction_desc": {"type": "string"}
                 },
                 "required": ["contradiction_desc"],
             },
         }
     )
-
     return registry
 
 
 class Orchestrator:
-    """TRIZ Workflow 编排器。"""
+    """TRIZ Workflow 编排器。
 
-    def __init__(self):
+    callback(event_type, data) 事件:
+    - node_start:  {node_name, current, total}
+    - step_start:  {step_name, step_type}
+    - step_complete: {step_name, step_type, result}
+    - step_error:  {step_name, step_type, error}
+    - node_complete: {node_name, ctx, outputs}
+    - decision:    {action, reason, feedback}
+    - report:      {content} (最终报告或中断消息)
+    """
+
+    def __init__(self, callback=None):
         self.output_buffer = []
         self.tool_registry = _register_m4_tools()
         self.skill_runner = SkillRunner(self.tool_registry)
+        self.callback = callback
 
-    def run_workflow(self, question: str, history: list = None) -> str:
-        """执行完整 TRIZ workflow，返回 Markdown 格式的最终报告。"""
+    def _notify(self, event_type: str, data: dict):
+        if self.callback:
+            self.callback(event_type, data)
+
+    def run_workflow(self, question: str, history: list = None):
+        """执行完整 TRIZ workflow，通过回调通知 UI 更新。
+
+        返回最终的 Markdown 报告字符串（供 /save 使用）。
+        """
         ctx = WorkflowContext(question=question, history=history or [])
         self.output_buffer = []
 
@@ -105,7 +103,9 @@ class Orchestrator:
         ])
 
         if not ctx.sao_list:
-            return self._generate_clarification("无法从问题中提取功能模型，请补充描述")
+            msg = self._generate_clarification("无法从问题中提取功能模型，请补充描述")
+            self._notify("report", {"content": msg})
+            return msg
 
         # ===== 迭代主循环 =====
         while True:
@@ -115,7 +115,9 @@ class Orchestrator:
             ])
 
             if not ctx.principles:
-                return self._generate_fallback("无法从矛盾定义中匹配到发明原理")
+                msg = self._generate_fallback("无法从矛盾定义中匹配到发明原理")
+                self._notify("report", {"content": msg})
+                return msg
 
             # 跨界检索
             ctx = self._execute_node("跨界检索", 3, 5, ctx, [
@@ -128,26 +130,35 @@ class Orchestrator:
             ])
 
             if not ctx.solution_drafts:
-                return self._generate_fallback("未能生成有效方案")
+                msg = self._generate_fallback("未能生成有效方案")
+                self._notify("report", {"content": msg})
+                return msg
 
             # 方案评估
             ctx = self._execute_node("方案评估", 5, 5, ctx, [
                 ("m6_evaluation", "Skill"),
             ])
 
-            # 收敛控制（内部调用，不渲染为用户可见节点）
+            # 收敛控制
             decision = check_convergence(ctx)
-            self.output_buffer.append(f"\n[编排器] 决策: {decision.action} - {decision.reason}\n")
+            self._notify("decision", {
+                "action": decision.action,
+                "reason": decision.reason,
+                "feedback": decision.feedback,
+            })
 
             if decision.action == "TERMINATE":
                 contradiction = ctx.contradiction_desc or "未识别矛盾"
                 report = render_final_report(
                     ctx.question, contradiction, ctx.ranked_solutions, decision.reason
                 )
-                return "\n".join(self.output_buffer) + "\n" + report
+                self._notify("report", {"content": report})
+                return report
 
             elif decision.action == "CLARIFY":
-                return self._generate_clarification(decision.reason)
+                msg = self._generate_clarification(decision.reason)
+                self._notify("report", {"content": msg})
+                return msg
 
             elif decision.action == "CONTINUE":
                 ctx.iteration += 1
@@ -162,11 +173,9 @@ class Orchestrator:
 
     def _execute_node(self, node_name: str, current: int, total: int,
                       ctx: WorkflowContext, steps: list) -> WorkflowContext:
-        """执行一个用户可见节点，渲染 Markdown 输出。
-
-        steps 格式: [(step_name, step_type), ...] 或 [(step_name, step_type, tool_func), ...]
-        """
-        self.output_buffer.append(render_node_start(node_name, current, total))
+        """执行一个用户可见节点，通过回调通知 UI。"""
+        self._notify("node_start", {"node_name": node_name, "current": current, "total": total})
+        node_outputs = []
 
         for step in steps:
             if len(step) == 2:
@@ -175,24 +184,41 @@ class Orchestrator:
             else:
                 step_name, step_type, step_func = step
 
+            # M2 门控
             if step_name == "m2_causal":
                 if not should_trigger_m2(ctx):
-                    self.output_buffer.append(f"- Tool: M2 门控 -> 跳过（无负面功能）\n")
+                    node_outputs.append({"type": "gate_skip", "reason": "无负面功能"})
+                    self._notify("step_complete", {
+                        "step_name": step_name, "step_type": "Gate",
+                        "result": {"skipped": True, "reason": "无负面功能"}
+                    })
                     continue
 
-            if step_type == "Skill":
-                result = self.skill_runner.run(step_name, ctx)
-            else:
-                result = step_func(ctx)
+            self._notify("step_start", {"step_name": step_name, "step_type": step_type})
 
-            # FOS search_cases 返回 list[Case]，需要包装为 dict
+            try:
+                if step_type == "Skill":
+                    result = self.skill_runner.run(step_name, ctx)
+                else:
+                    result = step_func(ctx)
+            except Exception as e:
+                self._notify("step_error", {
+                    "step_name": step_name, "step_type": step_type, "error": str(e)
+                })
+                # 降级：返回空结果继续
+                result = {}
+
+            # FOS search_cases 返回 list[Case]，包装为 dict
             if isinstance(result, list):
                 result = {"cases": result}
 
             ctx = self._merge_result(ctx, result)
-            self.output_buffer.append(render_step_complete(step_name, step_type, result))
+            self._notify("step_complete", {
+                "step_name": step_name, "step_type": step_type, "result": result
+            })
+            node_outputs.append({"step_name": step_name, "step_type": step_type, "result": result})
 
-        self.output_buffer.append(render_node_complete(node_name, ctx))
+        self._notify("node_complete", {"node_name": node_name, "ctx": ctx, "outputs": node_outputs})
         return ctx
 
     def _merge_result(self, ctx: WorkflowContext, result: dict) -> WorkflowContext:
@@ -201,7 +227,6 @@ class Orchestrator:
             if not hasattr(ctx, key):
                 continue
 
-            # 将 dict 列表反序列化为 Pydantic 模型对象
             if key == "sao_list" and isinstance(value, list):
                 value = [
                     SAO.model_validate(item) if isinstance(item, dict) else item
@@ -222,10 +247,8 @@ class Orchestrator:
                 for item in value:
                     if isinstance(item, dict):
                         if "draft" in item and isinstance(item["draft"], dict):
-                            # 嵌套格式
                             converted.append(Solution.model_validate(item))
                         else:
-                            # 扁平格式 → 手动构造嵌套
                             draft = SolutionDraft(
                                 title=item.get("title", ""),
                                 description=item.get("description", ""),
@@ -241,8 +264,7 @@ class Orchestrator:
                                 ifr_deviation_reason=item.get("ifr_deviation_reason", ""),
                             )
                             converted.append(Solution(
-                                draft=draft,
-                                tags=tags,
+                                draft=draft, tags=tags,
                                 ideality_score=item.get("ideality_score", 0.5),
                                 evaluation_rationale=item.get("evaluation_rationale", ""),
                             ))
@@ -254,7 +276,7 @@ class Orchestrator:
         return ctx
 
     def _generate_clarification(self, reason: str) -> str:
-        return "\n".join(self.output_buffer) + f"\n\n**需要补充信息**：{reason}\n\n请提供更多细节，例如：具体的使用场景、现有的限制条件、已尝试的解决方案等。"
+        return f"**需要补充信息**：{reason}\n\n请提供更多细节，例如：具体的使用场景、现有的限制条件、已尝试的解决方案等。"
 
     def _generate_fallback(self, reason: str) -> str:
-        return "\n".join(self.output_buffer) + f"\n\n**流程中断**：{reason}\n\n建议：尝试用更具体的工程语言描述问题，或提供更多技术细节。"
+        return f"**流程中断**：{reason}\n\n建议：尝试用更具体的工程语言描述问题，或提供更多技术细节。"
