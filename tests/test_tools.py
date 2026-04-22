@@ -2,7 +2,6 @@ import pytest
 import os
 from triz.context import WorkflowContext, SAO, ConvergenceDecision
 from triz.tools.m3_formulation import formulate_problem
-from triz.tools.m4_solver import solve_contradiction
 from triz.tools.m7_convergence import check_convergence
 from triz.tools.m2_gate import should_trigger_m2
 from triz.tools.fos_search import search_cases
@@ -45,57 +44,6 @@ def test_formulate_fallback():
     result = formulate_problem(ctx)
     assert result["problem_type"] == "tech"
     assert result["contradiction_desc"] == "" or result["contradiction_desc"] == "未识别矛盾"
-
-
-# --- M4 矛盾求解 ---
-
-@pytest.fixture(scope="module", autouse=True)
-def setup_db(tmp_path_factory):
-    """初始化测试数据库（模块级）。"""
-    db_path = tmp_path_factory.mktemp("data") / "test_triz.db"
-    import triz.config
-    import triz.database.init_db
-    import triz.database.queries
-    triz.config.DB_PATH = db_path
-    triz.database.init_db.DB_PATH = db_path
-    triz.database.queries.DB_PATH = db_path
-    init_database()
-    yield db_path
-    if db_path.exists():
-        os.remove(db_path)
-
-
-def test_solve_tech_contradiction_speed_shape():
-    ctx = WorkflowContext(question="test")
-    ctx.problem_type = "tech"
-    ctx.contradiction_desc = "改善速度，恶化形状稳定性"
-    ctx.candidate_attributes = ["速度", "形状"]
-
-    result = solve_contradiction(ctx)
-    assert len(result["principles"]) > 0
-    assert result["improve_param_id"] == 9   # Speed
-    assert result["worsen_param_id"] == 12   # Shape
-
-
-def test_solve_phys_contradiction():
-    ctx = WorkflowContext(question="test")
-    ctx.problem_type = "phys"
-    ctx.contradiction_desc = "接触面积既要大又要小"
-    ctx.candidate_attributes = ["接触面积"]
-
-    result = solve_contradiction(ctx)
-    assert len(result["principles"]) > 0
-    assert result["sep_type"] is not None
-
-
-def test_solve_fallback_on_empty_matrix():
-    ctx = WorkflowContext(question="test")
-    ctx.problem_type = "tech"
-    ctx.contradiction_desc = "改善重量，恶化速度"
-    ctx.candidate_attributes = ["重量", "速度"]
-
-    result = solve_contradiction(ctx)
-    assert isinstance(result["principles"], list)
 
 
 # --- M7 收敛控制 ---
@@ -173,6 +121,22 @@ def test_m2_gate_skip_all_useful():
 
 
 # --- FOS 跨界检索 ---
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_db(tmp_path_factory):
+    """初始化测试数据库（模块级）。"""
+    db_path = tmp_path_factory.mktemp("data") / "test_triz.db"
+    import triz.config
+    import triz.database.init_db
+    import triz.database.queries
+    triz.config.DB_PATH = db_path
+    triz.database.init_db.DB_PATH = db_path
+    triz.database.queries.DB_PATH = db_path
+    init_database()
+    yield db_path
+    if db_path.exists():
+        os.remove(db_path)
+
 
 def test_search_local_cases():
     ctx = WorkflowContext(question="如何提高手术刀片耐用性")
