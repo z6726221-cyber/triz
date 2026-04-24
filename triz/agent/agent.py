@@ -58,6 +58,7 @@ class TrizAgent:
 
         # ReAct 主循环
         max_steps = 20
+        consecutive_errors = {}  # skill_name -> count
         for step in range(max_steps):
             # 1. Agent 思考并决策
             decision = self._think_and_act()
@@ -112,14 +113,23 @@ class TrizAgent:
                     })
 
                 except Exception as e:
+                    consecutive_errors[skill_name] = consecutive_errors.get(skill_name, 0) + 1
+                    err_msg = f"执行 {skill_name} 出错 ({consecutive_errors[skill_name]}/3): {str(e)}"
                     self.memory.append({
                         "role": "system",
-                        "content": f"执行 {skill_name} 出错: {str(e)}",
+                        "content": err_msg,
                     })
                     self._notify("step_error", {
                         "step_name": skill_name,
                         "error": str(e),
                     })
+                    # 连续失败 3 次，跳过该 Skill
+                    if consecutive_errors[skill_name] >= 3:
+                        self.memory.append({
+                            "role": "system",
+                            "content": f"{skill_name} 连续失败 3 次，跳过此步骤。",
+                        })
+                        consecutive_errors[skill_name] = 0
 
             else:
                 self.memory.append({
@@ -223,31 +233,29 @@ class TrizAgent:
 
     def _merge_result(self, result: dict):
         """将模块输出合并到 WorkflowContext。"""
+        from triz.context import SAO, Case, SolutionDraft, Solution, QualitativeTags
+
         ctx = self.ctx
         for key, value in result.items():
             if not hasattr(ctx, key):
                 continue
 
             if key == "sao_list" and isinstance(value, list):
-                from triz.context import SAO
                 value = [
                     SAO.model_validate(item) if isinstance(item, dict) else item
                     for item in value
                 ]
             elif key == "cases" and isinstance(value, list):
-                from triz.context import Case
                 value = [
                     Case.model_validate(item) if isinstance(item, dict) else item
                     for item in value
                 ]
             elif key == "solution_drafts" and isinstance(value, list):
-                from triz.context import SolutionDraft
                 value = [
                     SolutionDraft.model_validate(item) if isinstance(item, dict) else item
                     for item in value
                 ]
             elif key == "ranked_solutions" and isinstance(value, list):
-                from triz.context import Solution, QualitativeTags
                 converted = []
                 for item in value:
                     if isinstance(item, dict):
