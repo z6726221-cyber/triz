@@ -130,6 +130,12 @@ class TRIZConsole:
             self.session_history = []
             self.console.print("[系统] 已重置上下文", style=STYLE_INFO)
 
+        elif action == "/agent":
+            self.use_agent = not self.use_agent
+            self.orch = None
+            mode = "Agent 自主决策" if self.use_agent else "Orchestrator 硬编码"
+            self.console.print(f"[系统] 已切换到 {mode} 模式", style=STYLE_SUCCESS)
+
         elif action == "/save":
             self._save_report(arg)
 
@@ -151,6 +157,7 @@ class TRIZConsole:
         help_text = """
 [bold]可用命令[/bold]
   [cyan]/new[/cyan]              开始新对话，重置上下文
+  [cyan]/agent[/cyan]             切换编排模式（Orchestrator / Agent）
   [cyan]/save [文件名][/cyan]      保存最终报告（默认: report.md）
   [cyan]/history[/cyan]           显示本轮所有节点输出
   [cyan]/show <节点名>[/cyan]      查看指定节点详情（如 /show M1）
