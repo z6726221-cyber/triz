@@ -14,6 +14,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
 
 from triz.orchestrator import Orchestrator
+from triz.agent import TrizAgent
 from triz.database.init_db import init_database
 
 # 修复 Windows 终端中文编码
@@ -50,10 +51,11 @@ STYLE_INFO = Style(color="bright_black")
 class TRIZConsole:
     """TRIZ 交互式控制台。"""
 
-    def __init__(self):
+    def __init__(self, use_agent: bool = False):
         self.console = Console()
         self.session = None  # 延迟初始化
         self.orch = None
+        self.use_agent = use_agent
         self.session_history = []
         self.last_report = ""
         self._nodes = []  # 当前轮次的节点输出缓存
@@ -200,14 +202,23 @@ class TRIZConsole:
         self.last_report = ""
 
         if self.orch is None:
-            self.orch = Orchestrator(callback=self._on_event)
+            if self.use_agent:
+                self.orch = TrizAgent(callback=self._on_event)
+                mode = "Agent 自主决策"
+            else:
+                self.orch = Orchestrator(callback=self._on_event)
+                mode = "Orchestrator 硬编码"
+            self.console.print(f"[模式] {mode}", style=STYLE_INFO)
 
         self.console.print()
         self.console.print(f"[分析开始] {datetime.now().strftime('%H:%M:%S')}", style=STYLE_INFO)
         self.console.print()
 
         try:
-            report = self.orch.run_workflow(question, self.session_history)
+            if self.use_agent:
+                report = self.orch.run(question, self.session_history)
+            else:
+                report = self.orch.run_workflow(question, self.session_history)
             self.last_report = report
         except Exception as e:
             self.console.print(f"\n[错误] 执行失败: {e}", style=STYLE_ERROR)
@@ -215,12 +226,13 @@ class TRIZConsole:
         self.session_history.append({"question": question})
 
     def _on_event(self, event_type: str, data: dict):
-        """Orchestrator 回调：根据事件类型更新 UI。"""
+        """Orchestrator/Agent 回调：根据事件类型更新 UI。"""
         if event_type == "node_start":
+            # Orchestrator 用 current/total，Agent 用 from_state/to_state
             node = {
-                "node_name": data["node_name"],
-                "current": data["current"],
-                "total": data["total"],
+                "node_name": data.get("node_name", data.get("to_state", "未知")),
+                "current": data.get("current", 0),
+                "total": data.get("total", 0),
                 "steps": [],
                 "status": "running",
             }
@@ -229,11 +241,15 @@ class TRIZConsole:
 
         elif event_type == "step_start":
             if self._nodes:
-                self._nodes[-1]["steps"].append({
+                step_info = {
                     "step_name": data["step_name"],
                     "step_type": data["step_type"],
                     "status": "running",
-                })
+                }
+                # Agent 模式下有 thought
+                if "agent_thought" in data:
+                    step_info["thought"] = data["agent_thought"]
+                self._nodes[-1]["steps"].append(step_info)
                 self._render_node(self._nodes[-1])
 
         elif event_type == "step_complete":
@@ -409,7 +425,7 @@ class TRIZConsole:
         self.console.print()
 
 
-def _run_single(question: str):
+def _run_single(question: str, use_agent: bool = False):
     """单次执行模式（非交互）。"""
     if not question or not question.strip():
         Console().print("[错误] 问题不能为空，使用 -q 指定问题或直接进入交互模式", style=STYLE_ERROR)
@@ -420,9 +436,17 @@ def _run_single(question: str):
     console.print(LOGO, style="bold bright_cyan")
     console.print()
 
-    orch = Orchestrator()
+    if use_agent:
+        console.print("[模式] Agent 自主决策", style=STYLE_INFO)
+        runner = TrizAgent()
+        run_method = runner.run
+    else:
+        console.print("[模式] Orchestrator 硬编码", style=STYLE_INFO)
+        runner = Orchestrator()
+        run_method = runner.run_workflow
+
     try:
-        report = orch.run_workflow(question)
+        report = run_method(question)
         console.print(Markdown(report))
     except Exception as e:
         console.print(f"[错误] 执行失败: {e}", style=STYLE_ERROR)
@@ -435,6 +459,7 @@ def main():
     )
     parser.add_argument("-q", "--query", help="单次模式：直接输入问题并输出报告")
     parser.add_argument("-f", "--file", help="从文件读取问题（单次模式）")
+    parser.add_argument("--agent", action="store_true", help="使用 Agent 自主决策模式（默认使用 Orchestrator）")
 
     args = parser.parse_args()
 
@@ -445,17 +470,17 @@ def main():
         except (OSError, IOError):
             pipe_input = ""
         if pipe_input:
-            _run_single(pipe_input)
+            _run_single(pipe_input, use_agent=args.agent)
             return
 
     # 单次模式：-q 或 -f
     if args.query:
-        _run_single(args.query)
+        _run_single(args.query, use_agent=args.agent)
     elif args.file:
         try:
             with open(args.file, "r", encoding="utf-8") as f:
                 question = f.read().strip()
-            _run_single(question)
+            _run_single(question, use_agent=args.agent)
         except FileNotFoundError:
             Console().print(f"[错误] 文件不存在: {args.file}", style=STYLE_ERROR)
             sys.exit(1)
@@ -464,7 +489,7 @@ def main():
             sys.exit(1)
     else:
         # 默认进入交互模式
-        triz = TRIZConsole()
+        triz = TRIZConsole(use_agent=args.agent)
         triz.run()
 
 
