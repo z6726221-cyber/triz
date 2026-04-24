@@ -12,6 +12,7 @@ from rich.style import Style
 from rich import box
 from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
+from prompt_toolkit.shortcuts import radiolist_dialog
 
 from triz.orchestrator import Orchestrator
 from triz.agent import TrizAgent
@@ -130,11 +131,8 @@ class TRIZConsole:
             self.session_history = []
             self.console.print("[系统] 已重置上下文", style=STYLE_INFO)
 
-        elif action == "/agent":
-            self.use_agent = not self.use_agent
-            self.orch = None
-            mode = "Agent 自主决策" if self.use_agent else "Orchestrator 硬编码"
-            self.console.print(f"[系统] 已切换到 {mode} 模式", style=STYLE_SUCCESS)
+        elif action == "/switch":
+            self._switch_mode()
 
         elif action == "/save":
             self._save_report(arg)
@@ -157,7 +155,7 @@ class TRIZConsole:
         help_text = """
 [bold]可用命令[/bold]
   [cyan]/new[/cyan]              开始新对话，重置上下文
-  [cyan]/agent[/cyan]             切换编排模式（Orchestrator / Agent）
+  [cyan]/switch[/cyan]            切换编排模式（弹出选择框）
   [cyan]/save [文件名][/cyan]      保存最终报告（默认: report.md）
   [cyan]/history[/cyan]           显示本轮所有节点输出
   [cyan]/show <节点名>[/cyan]      查看指定节点详情（如 /show M1）
@@ -167,6 +165,31 @@ class TRIZConsole:
 [dim]直接输入问题即可执行 TRIZ 分析[/dim]
 """
         self.console.print(help_text)
+
+    def _switch_mode(self):
+        """通过 RadioList 对话框切换编排模式。"""
+        try:
+            result = radiolist_dialog(
+                title="选择编排模式",
+                text="切换后下次分析生效",
+                values=[
+                    (False, "标准流程（Orchestrator 硬编码）"),
+                    (True,  "自主决策（Agent 自主调用）"),
+                ],
+                default=self.use_agent,
+            ).run()
+
+            if result is not None:
+                self.use_agent = result
+                self.orch = None
+                mode = "自主决策" if self.use_agent else "标准流程"
+                self.console.print(f"[系统] 已切换到 {mode} 模式", style=STYLE_SUCCESS)
+        except Exception as e:
+            # RadioList 在不支持 TUI 的终端会报错，回退到简单切换
+            self.use_agent = not self.use_agent
+            self.orch = None
+            mode = "自主决策" if self.use_agent else "标准流程"
+            self.console.print(f"[系统] 已切换到 {mode} 模式", style=STYLE_SUCCESS)
 
     def _save_report(self, filename: str):
         if not self.last_report:
