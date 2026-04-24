@@ -86,6 +86,54 @@ class Orchestrator:
         self.tool_registry = _register_m4_tools()
         self.skill_registry = SkillRegistry(tool_registry=self.tool_registry)
         self.callback = callback
+        self._setup_routes()
+
+    def _setup_routes(self):
+        """配置默认的节点路由规则。
+
+        每个节点可以有多个候选路由，按优先级降序匹配第一个满足条件的。
+        后续新增模块（物场分析、剪裁等）只需在此注册新路由即可。
+        """
+        registry = self.skill_registry
+
+        # 节点 1: 问题建模
+        registry.register_node_route(
+            "modeling",
+            [
+                ("m1_modeling", "Skill"),
+                ("m2_causal", "Skill"),
+                ("m3_formulation", "Skill"),
+            ],
+            priority=1,
+        )
+
+        # 节点 2: 矛盾求解
+        registry.register_node_route(
+            "solver",
+            [("m4_solver", "Skill")],
+            priority=1,
+        )
+
+        # 节点 3: 跨界检索
+        registry.register_node_route(
+            "search",
+            [("FOS", "Tool", search_cases)],
+            priority=1,
+        )
+
+        # 节点 4: 方案生成
+        registry.register_node_route(
+            "generation",
+            [("m5_generation", "Skill")],
+            priority=1,
+        )
+
+        # 节点 5: 方案评估
+        registry.register_node_route(
+            "evaluation",
+            [("m6_evaluation", "Skill")],
+            priority=1,
+        )
 
     def _notify(self, event_type: str, data: dict):
         if self.callback:
@@ -107,11 +155,10 @@ class Orchestrator:
             return msg
 
         # ===== 问题建模 =====
-        ctx = self._execute_node("问题建模", 1, 5, ctx, [
-            ("m1_modeling", "Skill"),
-            ("m2_causal", "Skill"),
-            ("m3_formulation", "Skill"),
-        ])
+        steps = self.skill_registry.resolve_node("modeling", ctx)
+        if not steps:
+            raise RuntimeError("未找到 'modeling' 节点的路由配置")
+        ctx = self._execute_node("问题建模", 1, 5, ctx, steps)
 
         if not ctx.sao_list:
             msg = self._generate_clarification("无法从问题中提取功能模型，请补充描述")
@@ -121,9 +168,10 @@ class Orchestrator:
         # ===== 迭代主循环 =====
         while True:
             # 矛盾求解
-            ctx = self._execute_node("矛盾求解", 2, 5, ctx, [
-                ("m4_solver", "Skill"),
-            ])
+            steps = self.skill_registry.resolve_node("solver", ctx)
+            if not steps:
+                raise RuntimeError("未找到 'solver' 节点的路由配置")
+            ctx = self._execute_node("矛盾求解", 2, 5, ctx, steps)
 
             if not ctx.principles:
                 # Fallback: 基于 candidate_attributes 直接查询参数
@@ -145,14 +193,16 @@ class Orchestrator:
                     return msg
 
             # 跨界检索
-            ctx = self._execute_node("跨界检索", 3, 5, ctx, [
-                ("FOS", "Tool", search_cases),
-            ])
+            steps = self.skill_registry.resolve_node("search", ctx)
+            if not steps:
+                raise RuntimeError("未找到 'search' 节点的路由配置")
+            ctx = self._execute_node("跨界检索", 3, 5, ctx, steps)
 
             # 方案生成
-            ctx = self._execute_node("方案生成", 4, 5, ctx, [
-                ("m5_generation", "Skill"),
-            ])
+            steps = self.skill_registry.resolve_node("generation", ctx)
+            if not steps:
+                raise RuntimeError("未找到 'generation' 节点的路由配置")
+            ctx = self._execute_node("方案生成", 4, 5, ctx, steps)
 
             if not ctx.solution_drafts:
                 # Fallback: 基于已获取的原理和案例构造默认方案
@@ -171,9 +221,10 @@ class Orchestrator:
                     return msg
 
             # 方案评估
-            ctx = self._execute_node("方案评估", 5, 5, ctx, [
-                ("m6_evaluation", "Skill"),
-            ])
+            steps = self.skill_registry.resolve_node("evaluation", ctx)
+            if not steps:
+                raise RuntimeError("未找到 'evaluation' 节点的路由配置")
+            ctx = self._execute_node("方案评估", 5, 5, ctx, steps)
 
             # 收敛控制
             decision = check_convergence(ctx)

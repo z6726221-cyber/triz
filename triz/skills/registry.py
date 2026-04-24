@@ -10,10 +10,12 @@ class SkillRegistry:
     """Skill 注册表。
 
     自动发现 triz/skills/ 下的子文件夹，导入 handler.py 并实例化 Skill。
+    支持按节点（node）注册路由规则，Orchestrator 通过节点名动态解析应执行的 Skills。
     """
 
     def __init__(self, client: OpenAIClient | None = None, tool_registry=None):
         self._skills: dict[str, Skill] = {}
+        self._node_routes: dict[str, list[dict]] = {}
         self.client = client
         self.tool_registry = tool_registry
         self._discover()
@@ -70,3 +72,78 @@ class SkillRegistry:
             }
             for s in self._skills.values()
         ]
+
+    # ------------------------------------------------------------------
+    # 节点路由（Node Routing）
+    # ------------------------------------------------------------------
+
+    def register_node_route(
+        self,
+        node_name: str,
+        steps: list,
+        condition=None,
+        priority: int = 1,
+    ) -> None:
+        """注册节点路由规则。
+
+        Args:
+            node_name: 节点名称（如 "modeling", "solver", "generation"）
+            steps: 该节点执行的步骤列表，格式同 Orchestrator._execute_node 的 steps 参数
+            condition: 触发条件函数 (ctx) -> bool，None 表示无条件匹配
+            priority: 优先级，越高越先匹配（默认 1）
+        """
+        if node_name not in self._node_routes:
+            self._node_routes[node_name] = []
+        self._node_routes[node_name].append(
+            {
+                "steps": steps,
+                "condition": condition,
+                "priority": priority,
+            }
+        )
+
+    def resolve_node(self, node_name: str, ctx) -> list:
+        """根据上下文解析节点应执行的步骤列表。
+
+        按优先级降序遍历路由规则，返回第一个条件匹配（或无条件）的 steps。
+        如果没有匹配的路由，返回空列表。
+
+        Returns:
+            steps 列表，格式同 _execute_node 的 steps 参数
+        """
+        routes = self._node_routes.get(node_name, [])
+        if not routes:
+            return []
+
+        # 按优先级降序排列
+        for route in sorted(routes, key=lambda r: r["priority"], reverse=True):
+            cond = route["condition"]
+            if cond is None or cond(ctx):
+                return route["steps"]
+
+        return []
+
+    def list_node_routes(self, node_name: str | None = None) -> list[dict]:
+        """列出节点路由规则。"""
+        if node_name:
+            return [
+                {
+                    "node": node_name,
+                    "steps": r["steps"],
+                    "priority": r["priority"],
+                    "has_condition": r["condition"] is not None,
+                }
+                for r in self._node_routes.get(node_name, [])
+            ]
+        result = []
+        for n, routes in self._node_routes.items():
+            for r in routes:
+                result.append(
+                    {
+                        "node": n,
+                        "steps": r["steps"],
+                        "priority": r["priority"],
+                        "has_condition": r["condition"] is not None,
+                    }
+                )
+        return result
