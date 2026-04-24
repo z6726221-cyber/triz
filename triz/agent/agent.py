@@ -96,16 +96,7 @@ class TrizAgent:
             # 1. Agent 决策下一步
             decision = self._agent_decide()
 
-            # 2. 验证决策合法性
-            if not is_valid_transition(self.state, decision["next_state"]):
-                # 非法跳转，强制保持在当前状态重试
-                self._notify("step_error", {
-                    "step_name": "agent_decision",
-                    "error": f"非法状态跳转: {self.state} -> {decision['next_state']}",
-                })
-                continue
-
-            # 3. 如果是重试当前状态（输出不合法）
+            # 2. 如果是重试当前状态（输出不合法），跳过状态机校验
             if decision["next_state"] == self.state:
                 self._notify("step_start", {
                     "step_name": decision["skill"],
@@ -137,6 +128,12 @@ class TrizAgent:
                     "result": result,
                 })
 
+                # 检查 M1 输出是否为空
+                if decision["skill"] == "m1_modeling" and not self.ctx.sao_list:
+                    msg = self._generate_clarification("无法从问题中提取功能模型，请补充描述")
+                    self._notify("report", {"content": msg})
+                    return msg
+
         # 生成最终报告
         return self._generate_report()
 
@@ -166,8 +163,12 @@ class TrizAgent:
         """构建 Agent 决策 prompt。"""
         ctx = self.ctx
 
+        # 判断当前状态是否已执行过对应的 Skill
+        state_executed = self.state in self._state_results
+
         lines = [
             f"当前状态: {self.state} ({get_state_name(self.state)})",
+            f"当前状态已执行 Skill: {'是' if state_executed else '否'}",
             f"用户问题: {ctx.question}",
             "",
             "=== 已完成的状态和结果 ===",
@@ -178,6 +179,8 @@ class TrizAgent:
             if state in self._state_results:
                 result = self._state_results[state]
                 lines.append(f"- {state}: {self._summarize_result(state, result)}")
+            else:
+                lines.append(f"- {state}: 未执行")
 
         lines.append("")
         lines.append("=== 当前上下文关键信息 ===")
@@ -191,14 +194,67 @@ class TrizAgent:
         lines.append(f"- 反馈: {ctx.feedback or '无'}")
 
         lines.append("")
-        lines.append(f"=== 从 '{self.state}' 可跳转的下一状态 ===")
-        next_states = STATE_MACHINE.get(self.state, [])
-        for ns in next_states:
-            skills = get_available_skills(ns)
-            lines.append(f"- {ns}: 可用 Skills {skills}")
+        lines.append("=== 决策规则 ===")
+
+        if self.state == "modeling" and not state_executed:
+            lines.append("当前处于 modeling 状态且尚未执行 Skill。")
+            lines.append("必须先执行 m1_modeling 完成功能建模。")
+            lines.append("设置: next_state='modeling', skill='m1_modeling'")
+        elif self.state == "modeling" and state_executed:
+            has_negative = any(s.function_type in ("harmful", "excessive", "insufficient") for s in ctx.sao_list)
+            if has_negative:
+                lines.append("modeling 已完成，存在负面功能，建议进入 causal 执行根因分析。")
+                lines.append("设置: next_state='causal', skill='m2_causal'")
+            else:
+                lines.append("modeling 已完成，无负面功能，可以直接进入 formulation。")
+                lines.append("设置: next_state='formulation', skill='m3_formulation'")
+        elif self.state == "causal" and not state_executed:
+            lines.append("当前处于 causal 状态且尚未执行 Skill。")
+            lines.append("必须先执行 m2_causal 完成根因分析。")
+            lines.append("设置: next_state='causal', skill='m2_causal'")
+        elif self.state == "causal" and state_executed:
+            lines.append("causal 已完成，必须进入 formulation。")
+            lines.append("设置: next_state='formulation', skill='m3_formulation'")
+        elif self.state == "formulation" and not state_executed:
+            lines.append("当前处于 formulation 状态且尚未执行 Skill。")
+            lines.append("必须先执行 m3_formulation 完成问题定型。")
+            lines.append("设置: next_state='formulation', skill='m3_formulation'")
+        elif self.state == "formulation" and state_executed:
+            lines.append("formulation 已完成，必须进入 solving。")
+            lines.append("设置: next_state='solving', skill='m4_solver'")
+        elif self.state == "solving" and not state_executed:
+            lines.append("当前处于 solving 状态且尚未执行 Skill。")
+            lines.append("必须先执行 m4_solver 查询发明原理。")
+            lines.append("设置: next_state='solving', skill='m4_solver'")
+        elif self.state == "solving" and state_executed:
+            lines.append("solving 已完成，必须进入 search。")
+            lines.append("设置: next_state='search', skill='FOS'")
+        elif self.state == "search" and not state_executed:
+            lines.append("当前处于 search 状态且尚未执行 Skill。")
+            lines.append("必须先执行 FOS 搜索跨界案例。")
+            lines.append("设置: next_state='search', skill='FOS'")
+        elif self.state == "search" and state_executed:
+            lines.append("search 已完成，必须进入 generation。")
+            lines.append("设置: next_state='generation', skill='m5_generation'")
+        elif self.state == "generation" and not state_executed:
+            lines.append("当前处于 generation 状态且尚未执行 Skill。")
+            lines.append("必须先执行 m5_generation 生成方案草稿。")
+            lines.append("设置: next_state='generation', skill='m5_generation'")
+        elif self.state == "generation" and state_executed:
+            lines.append("generation 已完成，必须进入 evaluation。")
+            lines.append("设置: next_state='evaluation', skill='m6_evaluation'")
+        elif self.state == "evaluation" and not state_executed:
+            lines.append("当前处于 evaluation 状态且尚未执行 Skill。")
+            lines.append("必须先执行 m6_evaluation 评估方案。")
+            lines.append("设置: next_state='evaluation', skill='m6_evaluation'")
+        elif self.state == "evaluation" and state_executed:
+            lines.append("evaluation 已完成，必须进入 convergence。")
+            lines.append("设置: next_state='convergence', skill=''")
+        else:
+            lines.append(f"当前状态: {self.state}")
+            lines.append("根据状态机规则和工作流上下文决定下一步。")
 
         lines.append("")
-        lines.append("请决定下一步应该进入哪个状态、执行哪个 Skill。")
         lines.append("如果当前步骤输出不合法（如空结果），请设置 next_state 为当前状态以重试。")
         lines.append("输出 JSON: {\"next_state\": \"...\", \"skill\": \"...\", \"reason\": \"...\"}")
 
