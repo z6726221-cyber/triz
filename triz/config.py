@@ -14,6 +14,7 @@ MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 # 各 Skill 可独立配置模型（如果不配置，默认使用 MODEL_NAME）
 MODEL_M1 = os.getenv("MODEL_M1", MODEL_NAME)
 MODEL_M2 = os.getenv("MODEL_M2", MODEL_NAME)
+MODEL_M3 = os.getenv("MODEL_M3", MODEL_NAME)
 MODEL_M4 = os.getenv("MODEL_M4", MODEL_NAME)
 MODEL_M5 = os.getenv("MODEL_M5", MODEL_NAME)
 MODEL_M6 = os.getenv("MODEL_M6", MODEL_NAME)

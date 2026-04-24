@@ -14,6 +14,7 @@ if sys.platform == "win32":
         pass
 
 from triz.orchestrator import Orchestrator
+from triz.utils.vector_math import preload_model
 
 
 def run_single(question: str, verbose: bool = False) -> dict:
@@ -73,7 +74,12 @@ def run_batch(test_cases: list[dict], name: str, verbose: bool = False) -> dict:
     print(f"\n{'='*60}")
     print(f"开始运行: {name}")
     print(f"用例数: {len(test_cases)}")
-    print(f"{'='*60}\n")
+    print(f"{'='*60}")
+
+    # 预加载 sentence-transformers 模型，避免第一个用例额外耗时
+    print("预加载语义模型...")
+    preload_model()
+    print("预加载完成。\n")
 
     results = []
     for i, case in enumerate(test_cases, 1):
@@ -84,6 +90,9 @@ def run_batch(test_cases: list[dict], name: str, verbose: bool = False) -> dict:
         results.append(result)
         status = "PASS" if result["success"] else "FAIL"
         print(f"      -> {status} ({result['elapsed_seconds']}s)")
+        # 用例之间延迟，避免 API 速率限制（M3 改为 LLM Skill 后每次请求更多）
+        if i < len(test_cases):
+            time.sleep(8.0)
 
     summary = {
         "test_name": name,

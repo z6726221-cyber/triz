@@ -7,7 +7,7 @@ def test_register_m4_tools():
     """验证 M4 tools 注册正确"""
     registry = _register_m4_tools()
     tools = registry.list_tools()
-    assert "query_parameters" in tools
+    assert "map_to_parameters" in tools
     assert "query_matrix" in tools
     assert "query_separation" in tools
     assert len(tools) == 3

@@ -60,7 +60,9 @@ class WorkflowContext(BaseModel):
 
     # M3 输出
     problem_type: Optional[Literal["tech", "phys"]] = None
-    contradiction_desc: str = ""  # 矛盾自然语言描述
+    improve_aspect: Optional[str] = None   # 需要改善的方面
+    worsen_aspect: Optional[str] = None    # 随之恶化的方面
+    contradiction_desc: str = ""  # 矛盾自然语言描述（兼容旧逻辑）
     evidence: List[str] = []      # 矛盾判定的支持证据（来自因果链）
 
     # M4 输出
