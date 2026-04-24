@@ -6,6 +6,9 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TypeVar, Generic, Type
 
+# 匹配 YAML frontmatter: ---\n...\n---\n
+_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+
 from pydantic import BaseModel
 
 from triz.utils.api_client import OpenAIClient
@@ -73,7 +76,7 @@ class Skill(ABC, Generic[InputT, OutputT]):
         return None
 
     def _load_prompt(self) -> str:
-        """从子类 handler.py 同级目录加载 SKILL.md。"""
+        """从子类 handler.py 同级目录加载 SKILL.md，自动跳过 YAML frontmatter。"""
         try:
             handler_file = inspect.getfile(type(self))
         except TypeError:
@@ -85,7 +88,13 @@ class Skill(ABC, Generic[InputT, OutputT]):
         if not skill_md.exists():
             raise FileNotFoundError(f"Skill 定义文件不存在: {skill_md}")
 
-        return skill_md.read_text(encoding="utf-8")
+        content = skill_md.read_text(encoding="utf-8")
+
+        match = _FRONTMATTER_RE.match(content)
+        if match:
+            return content[match.end():].strip()
+
+        return content
 
     def _call_llm(self, system_prompt: str, user_prompt: str, json_mode: bool = False) -> str:
         """通用 LLM 调用。"""
