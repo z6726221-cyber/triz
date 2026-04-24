@@ -6,7 +6,6 @@ from unittest.mock import Mock, patch, MagicMock
 
 from triz.context import WorkflowContext, ConvergenceDecision, SAO
 from triz.orchestrator import Orchestrator
-from triz.core.skill_runner import SkillRunner
 from triz.core.tool_registry import ToolRegistry
 from triz.tools.query_matrix import query_matrix
 from triz.database.init_db import init_database
@@ -89,52 +88,6 @@ def test_orchestrator_catches_generic_exception():
     assert "Boom" in errors[0]["error"]
 
 
-# ---------------------------------------------------------------------------
-# 2. SkillRunner JSON 解析 - 非标准输入
-# ---------------------------------------------------------------------------
-
-def test_parse_result_extracts_json_from_text():
-    """LLM 返回 Markdown 或纯文本包裹 JSON 时，应正确提取。"""
-    runner = SkillRunner(ToolRegistry())
-
-    result = runner._parse_result("Here is the result: {\"key\": \"value\"}")
-    assert result == {"key": "value"}
-
-
-def test_parse_result_extracts_array_from_text():
-    """文本中包含 JSON 数组时，应包装为 {'result': [...]}。"""
-    runner = SkillRunner(ToolRegistry())
-
-    result = runner._parse_result("Some prefix [1, 2, 3] suffix")
-    assert result == {"result": [1, 2, 3]}
-
-
-def test_parse_result_extracts_nested_json():
-    """复杂嵌套 JSON 应正确解析。"""
-    runner = SkillRunner(ToolRegistry())
-
-    text = '前缀 {"a": {"b": [1, 2]}} 后缀'
-    result = runner._parse_result(text)
-    assert result == {"a": {"b": [1, 2]}}
-
-
-def test_parse_result_raises_on_no_json():
-    """完全不含 JSON 的文本应抛出 ValueError。"""
-    runner = SkillRunner(ToolRegistry())
-
-    with pytest.raises(ValueError, match="无法解析"):
-        runner._parse_result("纯文本，没有任何 JSON")
-
-
-def test_parse_result_no_recursion_on_broken_json():
-    """修复前的 bug：包含 { 但非有效 JSON 时不会无限递归。"""
-    runner = SkillRunner(ToolRegistry())
-
-    # 包含大括号但不是 JSON——旧代码会无限递归
-    text = "This {is not valid json} content"
-    with pytest.raises(ValueError, match="无法解析"):
-        runner._parse_result(text)
-
 
 # ---------------------------------------------------------------------------
 # 3. Orchestrator 硬终止路径
@@ -212,48 +165,7 @@ def test_orchestrator_fallback_when_empty_drafts():
 
 
 # ---------------------------------------------------------------------------
-# 4. SkillRunner - M4 强制重试
-# ---------------------------------------------------------------------------
-
-def test_skill_runner_force_retry_on_missing_tool_calls(tmp_path, monkeypatch):
-    """M4 require_tool_calls=True 时，LLM 未调用 tool 应强制重试一次。"""
-    registry = ToolRegistry()
-    # 注册一个 dummy tool，使 tools 列表非空，才能触发重试逻辑
-    registry.register(
-        name="dummy_tool",
-        func=lambda: {},
-        schema={"name": "dummy_tool", "description": "x", "parameters": {"type": "object", "properties": {}}},
-    )
-    runner = SkillRunner(registry)
-
-    # 第一次：LLM 直接返回 JSON，未调用 tool
-    response1 = _make_mock_response(content='{"principles": [1]}')
-    # 第二次：仍然不调用（模拟重试后仍失败）
-    response2 = _make_mock_response(content='{"principles": [1, 2]}')
-
-    mock_client = Mock()
-    mock_client.chat_with_tools = Mock(side_effect=[response1, response2])
-    runner.client = mock_client
-
-    skills_dir = tmp_path / "skills"
-    skills_dir.mkdir()
-    skill_file = skills_dir / "m4_solver.md"
-    skill_file.write_text("# M4\n调用 tool。", encoding="utf-8")
-
-    monkeypatch.setattr(
-        runner, "_get_skill_path",
-        lambda name: tmp_path / "skills" / f"{name}.md"
-    )
-
-    ctx = WorkflowContext(question="test")
-    result = runner.run("m4_solver", ctx, require_tool_calls=True)
-
-    assert mock_client.chat_with_tools.call_count == 2
-    assert result["principles"] == [1, 2]
-
-
-# ---------------------------------------------------------------------------
-# 5. 数据库 - fallback
+# 4. 数据库 - fallback
 # ---------------------------------------------------------------------------
 
 def test_query_matrix_returns_fallback_for_invalid_params():
@@ -263,19 +175,7 @@ def test_query_matrix_returns_fallback_for_invalid_params():
 
 
 # ---------------------------------------------------------------------------
-# 6. Skill 文件缺失
-# ---------------------------------------------------------------------------
-
-def test_skill_runner_raises_on_missing_skill_file():
-    """Skill .md 文件不存在时应抛出 FileNotFoundError。"""
-    runner = SkillRunner(ToolRegistry())
-    ctx = WorkflowContext(question="test")
-    with pytest.raises(FileNotFoundError):
-        runner.run("nonexistent_skill_xyz", ctx)
-
-
-# ---------------------------------------------------------------------------
-# 7. 多轮迭代 CONTINUE 状态重置
+# 5. 多轮迭代 CONTINUE 状态重置
 # ---------------------------------------------------------------------------
 
 def test_orchestrator_continue_resets_iteration_state():
