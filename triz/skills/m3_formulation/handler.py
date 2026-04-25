@@ -30,7 +30,7 @@ class M3FormulationSkill(Skill[M3Input, M3Output]):
     """
 
     name = "m3_formulation"
-    description = "基于根因分析结果提取标准化的 TRIZ 矛盾对"
+    description = "当需要将根因分析结果转化为标准化矛盾表述（技术矛盾/物理矛盾）时使用"
     temperature = 0.1
     input_schema = M3Input
     output_schema = M3Output
@@ -57,6 +57,16 @@ class M3FormulationSkill(Skill[M3Input, M3Output]):
             raw["evidence"] = [input_data.root_param, input_data.key_problem]
 
         return self.validate_output(raw)
+
+    def post_validate(self, output: M3Output, ctx: WorkflowContext) -> list[str]:
+        warnings = []
+        if output.problem_type not in ("tech", "phys"):
+            warnings.append(f"problem_type 非法: {output.problem_type}，应为 tech 或 phys")
+        if len(output.improve_aspect) < 2 or len(output.improve_aspect) > 20:
+            warnings.append(f"improve_aspect 长度异常: {len(output.improve_aspect)} 字符")
+        if len(output.worsen_aspect) < 2 or len(output.worsen_aspect) > 20:
+            warnings.append(f"worsen_aspect 长度异常: {len(output.worsen_aspect)} 字符")
+        return warnings
 
     def _build_prompt(self, data: M3Input) -> str:
         """构建 M3 user prompt。"""

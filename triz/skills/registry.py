@@ -69,6 +69,7 @@ class SkillRegistry:
                 "name": s.name,
                 "description": s.description,
                 "version": s.version,
+                "gotchas": s.gotchas,
             }
             for s in self._skills.values()
         ]

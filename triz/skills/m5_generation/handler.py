@@ -48,7 +48,7 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
     """
 
     name = "m5_generation"
-    description = "基于发明原理和跨界案例生成具体可执行的解决方案"
+    description = "当已获得发明原理，需要搜索跨领域案例并生成具体方案时使用"
     temperature = 0.4
     input_schema = M5Input
     output_schema = M5Output
@@ -68,6 +68,12 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
 
         # === 阶段 2：过滤 + 提取模式 + 生成方案 ===
         system_prompt = self._load_prompt()
+
+        # 渐进式披露：加载详细生成指南
+        guide = self._load_reference("generation_guide.md")
+        if guide:
+            system_prompt += "\n\n" + guide
+
         user_prompt = self._build_prompt_v2(input_data, search_result)
 
         response = self._call_llm(
@@ -101,6 +107,17 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
                 ))
 
         return output
+
+    def post_validate(self, output: M5Output, ctx: WorkflowContext) -> list[str]:
+        warnings = []
+        if not output.solution_drafts:
+            warnings.append("方案列表为空")
+        for draft in output.solution_drafts:
+            if not draft.applied_principles:
+                warnings.append(f"方案 '{draft.title}' 未引用发明原理")
+            if len(draft.description) < 50:
+                warnings.append(f"方案 '{draft.title}' 描述过短（{len(draft.description)} 字符）")
+        return warnings
 
     def _search_phase(self, data: M5Input, ctx: WorkflowContext) -> dict:
         """阶段1：生成搜索词 → 调用 FOS。"""

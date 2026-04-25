@@ -1,9 +1,12 @@
 ---
 name: m6_evaluation
 description: >
-  独立评审方案草案，给出 8 维度量化评分和理想度排序。
-  当需要评估方案质量、筛选最优解、检查方案与原始问题的匹配度，或决定是否需要迭代改进时，必须使用此 Skill。
+  当需要评估方案质量、筛选最优解、决定是否需要迭代改进时使用。
 version: "1.0"
+gotchas:
+  - 评分必须有区分度，不能所有方案都给 3 分
+  - problem_relevance_score 必须与用户原始问题对比，而非中间矛盾描述
+  - 非工程问题的 relevance_score 必须 ≤ 2
 ---
 
 # M6 方案评估
@@ -12,7 +15,7 @@ version: "1.0"
 独立评审方案草案，给出 8 维度量化评分和理想度，按理想度排序。
 
 ## 输出格式
-直接输出以下 JSON 格式：
+直接输出以下 JSON 格式（注意：`ideality_score` 和 `max_ideality` 由系统自动计算，不需要你输出）：
 
 ```json
 {
@@ -30,78 +33,27 @@ version: "1.0"
             "ifr_deviation_reason": "",
             "problem_relevance_score": 4,
             "logical_consistency_score": 5,
-            "ideality_score": 0.78,
             "evaluation_rationale": "评分依据说明"
         }
     ],
-    "max_ideality": 0.78,
     "unresolved_signals": []
 }
 ```
 
-## 评估维度（每个方案）
+## 评估维度（8个）
 
-### 基础维度（评估方案质量）
 1. **feasibility_score** (1-5): 技术可实现性
 2. **resource_fit_score** (1-5): 资源匹配度
 3. **innovation_score** (1-5): 创新性
 4. **uniqueness_score** (1-5): 独特性
 5. **risk_level** (low/medium/high/critical): 风险等级
-6. **ifr_deviation_reason** (文本): 如果偏离 IFR，说明原因；否则留空
+6. **problem_relevance_score** (1-5): 方案与用户原始问题的匹配度（最重要，权重20%）
+7. **logical_consistency_score** (1-5): 方案内部逻辑一致性（权重10%）
+8. **ifr_deviation_reason**: 如果偏离 IFR，说明原因；否则留空
 
-### 准入维度（评估方案资格）
-7. **problem_relevance_score** (1-5): 方案与用户**原始问题**的匹配度（必须与 `ctx.question` 直接对比，而非中间提取的矛盾描述）
-   - 5分：方案直接、明确地解决了用户提出的核心矛盾
-   - 4分：方案与问题高度相关，但略有偏差
-   - 3分：方案与问题相关，但不是最直接的路径
-   - 2分：方案与问题有一定关联，但偏离较远
-   - 1分：方案答非所问，与用户问题无关（特别是非工程问题硬套工程方案的情况）
+详细的评分标准和交叉验证方法，请参考 `references/scoring_rubric.md`。
 
-8. **logical_consistency_score** (1-5): 方案内部逻辑一致性
-   - 5分：方案描述自洽，发明原理被正确应用，因果链完整
-   - 4分：方案基本自洽，但有小瑕疵
-   - 3分：方案大体合理，但存在逻辑跳跃
-   - 2分：方案存在明显逻辑矛盾或原理误用
-   - 1分：方案自相矛盾，原理应用错误
-
-### 交叉验证方法
-
-对每个方案执行以下验证：
-
-1. **问题-方案匹配验证（最重要）**：
-   - **必须将方案与用户原始问题（`ctx.question`）直接对比，而不是与中间提取的"矛盾描述"对比**
-   - 回答：这个方案是否解决了用户**实际提出的原始问题**？如果不，差距在哪里？
-   - **对抗性示例**（这些输入不是工程问题，任何方案的 problem_relevance_score 必须 ≤ 2）：
-     - 用户问"今天天气怎么样" → 方案讨论"天气监测传感器优化" → relevance_score = 1（答非所问）
-     - 用户问"如何追女朋友" → 方案讨论"社交算法改进" → relevance_score = 1（非工程问题）
-     - 用户问"1+1等于几" → 方案讨论"计算芯片架构" → relevance_score = 1（数学问题，非工程矛盾）
-     - 用户问"如何成为亿万富翁" → 方案讨论"投资策略优化" → relevance_score = 1（非工程问题）
-   - **判断标准**：如果原始问题不包含具体的技术对象（设备、材料、结构）或性能参数冲突，就是非工程问题，relevance_score 必须打低分
-
-2. **原理-方案一致性验证**：
-   - 检查方案中是否实际应用了 `applied_principles` 中列出的发明原理
-   - 如果方案说用了原理15（动态化），但实际描述中没有动态调整的内容，逻辑一致性打低分
-
-3. **因果链验证**：
-   - 方案描述的因果关系是否成立？
-   - 比如"用复合材料→提高耐磨性"是合理因果，但"改变颜色→提高强度"则不是
-
-### 理想度计算
-
-ideality_score = 加权平均
-- feasibility_score: 20%
-- resource_fit_score: 15%
-- innovation_score: 15%
-- uniqueness_score: 10%
-- risk_level: 反向计算（low=5, medium=3, high=1, critical=0），权重 10%
-- **problem_relevance_score: 20%** ← 权重最高
-- **logical_consistency_score: 10%**
-
-然后归一化到 0.0-1.0。
-
-**重要规则**：
-- 如果 problem_relevance_score < 3，ideality_score 最高不超过 0.5（答非所问的方案质量再高也不能给高分）
-- 如果 logical_consistency_score < 3，ideality_score 最高不超过 0.6（逻辑不自洽的方案需要大幅扣分）
+**注意**：`ideality_score` 由系统自动计算（脚本），你只需输出原始评分。`max_ideality` 也由系统自动填充。
 
 ## 其他要求
 
@@ -112,3 +64,11 @@ ideality_score = 加权平均
 - unresolved_signals: 收集所有风险为 high/critical 的方案标题，以及 ifr_deviation_reason 非空的记录，以及 problem_relevance_score < 3 的记录，以及 logical_consistency_score < 3 的记录
 
 【重要】直接输出 JSON，不要输出任何其他内容。
+
+## Gotchas（常见陷阱）
+
+1. **评分趋中**：LLM 倾向于给所有方案都打 3 分 → 必须有区分度，好方案 4-5 分，差方案 1-2 分
+2. **对比对象错误**：problem_relevance_score 必须与用户原始问题（ctx.question）对比，而非中间提取的矛盾描述
+3. **非工程问题未识别**：如果用户问的是"今天天气怎么样"之类的问题，relevance_score 必须 ≤ 2
+4. **原理应用未验证**：方案说用了原理 15（动态化），但描述中没有动态调整的内容 → logical_consistency_score 应打低分
+5. **title/description 未原样复制**：ranked_solutions 中的 title/description 必须与输入的 solution_drafts 一致

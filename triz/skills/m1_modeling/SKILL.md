@@ -1,9 +1,12 @@
 ---
 name: m1_modeling
 description: >
-  将用户问题拆解为结构化的功能模型，提取 SAO 三元组、可用资源和理想最终结果。
-  当用户需要分析工程问题的功能结构、识别系统中的有用/有害/过度/不足功能时，必须使用此 Skill。
+  当用户提出工程问题，需要提取功能模型（SAO三元组、资源、IFR）时使用。
 version: "1.0"
+gotchas:
+  - 问题描述过于抽象时 SAO 提取会失败，应先要求具体化
+  - function_type 必须是 useful/harmful/excessive/insufficient 之一
+  - LLM 常忽略"时间"和"信息"类资源
 ---
 
 # M1 功能建模
@@ -39,3 +42,10 @@ function_type 必须是以下之一：useful / harmful / excessive / insufficien
 3. 描述理想最终结果（IFR）：系统在自服务状态下达成目标的理想描述
 
 【重要】直接输出 JSON，不要输出思考过程、分析说明、markdown 代码块标记等任何额外内容。
+
+## Gotchas（常见陷阱）
+
+1. **抽象问题**：用户说"提高效率"而非具体场景 → SAO 提取会空或错误 → 应先要求补充具体场景（如"什么设备、什么操作、什么条件"）
+2. **function_type 误用**：LLM 倾向于把所有功能标为 useful → 需要检查是否有 harmful/excessive/insufficient，特别是用户明确提到的负面效果
+3. **资源遗漏**：LLM 常忽略"时间"和"信息"类资源 → 提示中强调六类资源（物质/场/空间/时间/信息/功能）都要检查
+4. **IFR 过于笼统**：IFR 应描述具体的理想状态，而非泛泛的"系统自动完成" → 应包含具体的自服务机制

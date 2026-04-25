@@ -27,7 +27,7 @@ class M1ModelingSkill(Skill[M1Input, M1Output]):
     """
 
     name = "m1_modeling"
-    description = "将用户问题拆解为结构化的功能模型（SAO 三元组、可用资源、理想最终结果）"
+    description = "当用户提出工程问题，需要提取功能模型（SAO三元组、资源、IFR）时使用"
     temperature = 0.1
     input_schema = M1Input
     output_schema = M1Output
@@ -45,3 +45,15 @@ class M1ModelingSkill(Skill[M1Input, M1Output]):
 
         raw = self._parse_json(response)
         return self.validate_output(raw)
+
+    def post_validate(self, output: M1Output, ctx: WorkflowContext) -> list[str]:
+        warnings = []
+        if not output.sao_list:
+            warnings.append("SAO 列表为空，可能问题描述过于抽象")
+        valid_types = {"useful", "harmful", "excessive", "insufficient"}
+        for sao in output.sao_list:
+            if sao.function_type not in valid_types:
+                warnings.append(f"SAO function_type 非法: {sao.function_type}")
+        if not output.ifr or output.ifr == "无":
+            warnings.append("IFR 为空或过于笼统")
+        return warnings

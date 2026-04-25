@@ -25,7 +25,7 @@ class M2CausalSkill(Skill[M2Input, M2Output]):
     """
 
     name = "m2_causal"
-    description = "从负面功能出发执行 RCA+因果链分析，找到根因节点和候选物理属性"
+    description = "当存在负面功能（harmful/excessive/insufficient）需要追溯根因时使用"
     temperature = 0.3
     input_schema = M2Input
     output_schema = M2Output

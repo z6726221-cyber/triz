@@ -199,6 +199,9 @@ class TrizAgent:
         lines.append("=== 可用 Skills ===")
         for skill_meta in self.skill_registry.list_skills():
             lines.append(f"- {skill_meta['name']}: {skill_meta['description']}")
+            if skill_meta.get("gotchas"):
+                for g in skill_meta["gotchas"][:2]:
+                    lines.append(f"  ⚠ {g}")
         if self.tool_registry:
             lines.append("")
             lines.append("=== 可用 Tools ===")
@@ -229,6 +232,26 @@ class TrizAgent:
 
         input_data = self._build_skill_input(skill)
         output = skill.execute(input_data, self.ctx)
+
+        # 业务逻辑校验 + 自动重试
+        warnings = skill.post_validate(output, self.ctx)
+        if warnings and len(warnings) >= 2:
+            # 校验警告 ≥ 2，重试一次
+            skill._retry_hints = warnings
+            output = skill.execute(input_data, self.ctx)
+            # 重试后再次校验
+            retry_warnings = skill.post_validate(output, self.ctx)
+            if retry_warnings:
+                self.memory.append({
+                    "role": "system",
+                    "content": f"{name} 重试后仍有警告: {'; '.join(retry_warnings)}",
+                })
+        elif warnings:
+            self.memory.append({
+                "role": "system",
+                "content": f"{name} 校验警告: {'; '.join(warnings)}",
+            })
+
         return output.model_dump() if hasattr(output, "model_dump") else output
 
     def _execute_fos(self, search_patents_func) -> dict:

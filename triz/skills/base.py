@@ -47,6 +47,8 @@ class Skill(ABC, Generic[InputT, OutputT]):
 
     def __init__(self, client: OpenAIClient | None = None, **kwargs):
         self.client = client or OpenAIClient()
+        self._gotchas_cache: list[str] | None = None
+        self._retry_hints: list[str] | None = None
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -66,6 +68,56 @@ class Skill(ABC, Generic[InputT, OutputT]):
     def validate_output(self, raw: dict) -> OutputT:
         """使用 Pydantic 验证并解析输出。"""
         return self.output_schema.model_validate(raw)
+
+    @property
+    def gotchas(self) -> list[str]:
+        """从 SKILL.md frontmatter 解析 gotchas 摘要。"""
+        if self._gotchas_cache is None:
+            self._gotchas_cache = self._parse_gotchas()
+        return self._gotchas_cache
+
+    def _parse_gotchas(self) -> list[str]:
+        """解析 SKILL.md frontmatter 中的 gotchas 列表。"""
+        try:
+            handler_file = inspect.getfile(type(self))
+        except TypeError:
+            handler_file = __file__
+
+        skill_dir = Path(handler_file).parent
+        skill_md = skill_dir / "SKILL.md"
+
+        if not skill_md.exists():
+            return []
+
+        content = skill_md.read_text(encoding="utf-8")
+        match = _FRONTMATTER_RE.match(content)
+        if not match:
+            return []
+
+        # 简单解析 YAML frontmatter 中的 gotchas
+        frontmatter = match.group(1)
+        in_gotchas = False
+        gotchas = []
+        for line in frontmatter.split("\n"):
+            stripped = line.strip()
+            if stripped.startswith("gotchas:"):
+                in_gotchas = True
+                continue
+            if in_gotchas:
+                if stripped.startswith("- "):
+                    gotchas.append(stripped[2:].strip())
+                elif stripped and not stripped.startswith("#"):
+                    break
+        return gotchas
+
+    def post_validate(self, output: OutputT, ctx: WorkflowContext) -> list[str]:
+        """业务逻辑校验，返回警告/错误列表。子类可覆盖。
+
+        与 validate_output() 的区别：
+        - validate_output(): Pydantic 结构校验（字段类型、必填）
+        - post_validate(): 业务逻辑校验（值是否合理、是否与上下文一致）
+        """
+        return []
 
     def fallback(self, input_data: InputT, error: Exception, ctx: WorkflowContext) -> OutputT | None:
         """失败时的降级策略。子类可覆盖。
@@ -91,10 +143,34 @@ class Skill(ABC, Generic[InputT, OutputT]):
         content = skill_md.read_text(encoding="utf-8")
 
         match = _FRONTMATTER_RE.match(content)
-        if match:
-            return content[match.end():].strip()
+        prompt = content[match.end():].strip() if match else content
 
-        return content
+        # 追加重试提示（校验失败时）
+        if self._retry_hints:
+            prompt += "\n\n## 校验警告（上次执行的问题，请特别注意）\n"
+            for hint in self._retry_hints:
+                prompt += f"- {hint}\n"
+            self._retry_hints = None
+
+        return prompt
+
+    def _load_reference(self, filename: str) -> str:
+        """加载 references/ 目录下的参考文件。
+
+        用于渐进式披露：SKILL.md 只放核心规则，详细内容按需从 references/ 加载。
+        """
+        try:
+            handler_file = inspect.getfile(type(self))
+        except TypeError:
+            handler_file = __file__
+
+        skill_dir = Path(handler_file).parent
+        ref_file = skill_dir / "references" / filename
+
+        if not ref_file.exists():
+            return ""
+
+        return ref_file.read_text(encoding="utf-8")
 
     def _call_llm(self, system_prompt: str, user_prompt: str, json_mode: bool = False) -> str:
         """通用 LLM 调用。"""
