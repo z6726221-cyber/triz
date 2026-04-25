@@ -1,5 +1,5 @@
 import pytest
-from triz.core.tool_registry import ToolRegistry
+from triz.tools.registry import ToolRegistry
 
 
 def test_register_and_execute():

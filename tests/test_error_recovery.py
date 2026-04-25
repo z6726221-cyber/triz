@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 from triz.context import WorkflowContext, ConvergenceDecision, SAO
 from triz.orchestrator import Orchestrator
-from triz.core.tool_registry import ToolRegistry
+from triz.tools.registry import ToolRegistry
 from triz.tools.query_matrix import query_matrix
 from triz.database.init_db import init_database
 from triz.tools import input_classifier

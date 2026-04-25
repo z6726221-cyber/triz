@@ -2,7 +2,7 @@
 import time
 
 from triz.context import WorkflowContext, ConvergenceDecision, SAO, SolutionDraft, Solution, Case, QualitativeTags
-from triz.core.tool_registry import ToolRegistry
+from triz.tools.registry import ToolRegistry
 from triz.skills.registry import SkillRegistry
 from triz.tools.m2_gate import should_trigger_m2
 from triz.tools.m7_convergence import check_convergence
@@ -16,9 +16,15 @@ from triz.config import MODEL_M1, MODEL_M2, MODEL_M3, MODEL_M4, MODEL_M5, MODEL_
 from triz.tools.input_classifier import classify_input
 
 
-def _register_m4_tools() -> ToolRegistry:
-    """注册 M4 Skill 可调用的 sub-tools。"""
+def _register_tools() -> ToolRegistry:
+    """注册所有可用 Tools。"""
     registry = ToolRegistry()
+
+    # 高层 Tools（Orchestrator/Agent 直接调用）
+    registry.register(name="solve_contradiction", func=solve_contradiction)
+    registry.register(name="search_patents", func=search_patents)
+
+    # 底层 Tools（供 Skill 内部调用）
     registry.register(
         name="map_to_parameters",
         func=map_to_parameters,
@@ -113,7 +119,7 @@ class Orchestrator:
 
     def __init__(self, callback=None):
         self.output_buffer = []
-        self.tool_registry = _register_m4_tools()
+        self.tool_registry = _register_tools()
         self.skill_registry = SkillRegistry(tool_registry=self.tool_registry)
         self.callback = callback
         self._setup_routes()
@@ -335,11 +341,9 @@ class Orchestrator:
         return output.model_dump() if hasattr(output, "model_dump") else output
 
     def _resolve_tool(self, name: str):
-        """按名称查找 Tool 函数（运行时导入，支持 mock）。"""
-        if name == "solve_contradiction":
-            from triz.tools.solve_contradiction import solve_contradiction
-            return solve_contradiction
-        return lambda ctx: {}
+        """按名称查找 Tool 函数。"""
+        func = self.tool_registry.get(name)
+        return func if func else lambda ctx: {}
 
     def _build_skill_input(self, skill, ctx: WorkflowContext):
         """从 WorkflowContext 提取 Skill 输入模型所需的字段。"""

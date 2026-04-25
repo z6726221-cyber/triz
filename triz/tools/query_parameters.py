@@ -1,9 +1,8 @@
 """参数查询 Tool：将中文描述映射到 39 工程参数 ID。
 
 策略：
-1. 精确关键词匹配（KEYWORD_PARAM_MAP）
-2. 语义相似度匹配（sentence-transformers，阈值 0.45）
-3. 如果都失败，返回空（触发 M4 的 LLM 兜底）
+1. 精确关键词匹配（KEYWORD_PARAM_MAP）— 快速路径
+2. 语义相似度匹配（预计算 embedding + 余弦相似度）
 """
 from typing import Optional
 from triz.config import SIMILARITY_THRESHOLD
@@ -86,20 +85,16 @@ KEYWORD_PARAM_MAP = {
     "排放": 31, "尾气": 31, "废气": 31, "污染": 31,
 }
 
-# 预加载 39 个参数的 embedding（延迟初始化）
-_param_embeddings: dict = {}
-_all_params: list = []
+# 预加载参数（含 embedding），延迟初始化
+_param_cache: list[dict] = []
 
 
-def _load_param_embeddings():
-    """预加载所有参数的语义向量，避免每次重复计算。"""
-    global _param_embeddings, _all_params
-    if _param_embeddings:
+def _load_params():
+    """从 DB 加载参数（含预计算的 embedding）。"""
+    global _param_cache
+    if _param_cache:
         return
-    _all_params = get_all_parameters()
-    for param in _all_params:
-        text = f"{param['name']} {param['name_cn']} {param.get('description', '')}"
-        _param_embeddings[param["id"]] = embed_text(text)
+    _param_cache = get_all_parameters()
 
 
 def _match_aspect(aspect: str) -> tuple[Optional[int], str, float]:
@@ -111,24 +106,27 @@ def _match_aspect(aspect: str) -> tuple[Optional[int], str, float]:
     if not aspect:
         return None, "none", 0.0
 
-    # 策略1: 精确关键词匹配
+    # 策略1: 精确关键词匹配（快速路径）
     for kw, param_id in KEYWORD_PARAM_MAP.items():
         if kw in aspect:
             return param_id, "keyword", 1.0
 
-    # 策略2: 语义相似度匹配
-    _load_param_embeddings()
+    # 策略2: 语义相似度匹配（使用预计算的 embedding）
+    _load_params()
     aspect_vec = embed_text(aspect)
     if not aspect_vec:
         return None, "none", 0.0
 
     best_id = None
     best_score = -1.0
-    for param_id, param_vec in _param_embeddings.items():
+    for param in _param_cache:
+        param_vec = param.get("embedding")
+        if not param_vec:
+            continue
         score = cosine_similarity(aspect_vec, param_vec)
         if score > best_score:
             best_score = score
-            best_id = param_id
+            best_id = param["id"]
 
     threshold = SIMILARITY_THRESHOLD * 0.75  # 语义匹配阈值略低
     if best_id and best_score >= threshold:
@@ -167,13 +165,12 @@ def map_to_parameters(improve_aspect: str, worsen_aspect: str) -> dict:
     }
 
 
-# 保留旧接口以兼容可能的外部调用
 def query_parameters(keywords: list[str]) -> list[dict]:
-    """根据关键词查询最匹配的 39 工程参数（旧接口，兼容 M4 fallback 等场景）。
+    """根据关键词查询最匹配的 39 工程参数。
 
     返回: [{"id": int, "name": str, "name_cn": str, "similarity": float, "match_type": str}, ...]
     """
-    _load_param_embeddings()
+    _load_params()
     results = []
     seen_ids = set()
 
@@ -186,7 +183,7 @@ def query_parameters(keywords: list[str]) -> list[dict]:
         for kw, param_id in KEYWORD_PARAM_MAP.items():
             if kw in keyword:
                 if param_id not in seen_ids:
-                    for param in _all_params:
+                    for param in _param_cache:
                         if param["id"] == param_id:
                             results.append({
                                 "id": param_id,
@@ -203,16 +200,15 @@ def query_parameters(keywords: list[str]) -> list[dict]:
         if matched:
             continue
 
-        # 语义相似度匹配
+        # 语义相似度匹配（使用预计算的 embedding）
         attr_vec = embed_text(keyword)
         if not attr_vec:
             continue
 
         best_match = None
         best_score = -1.0
-        for param in _all_params:
-            desc = param.get("description", "")
-            param_vec = embed_text(f"{param['name']} {param['name_cn']} {desc}")
+        for param in _param_cache:
+            param_vec = param.get("embedding")
             if not param_vec:
                 continue
             score = cosine_similarity(attr_vec, param_vec)

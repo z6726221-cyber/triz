@@ -23,10 +23,16 @@ def get_parameter_by_id(param_id: int) -> Optional[dict]:
 def get_all_parameters() -> List[dict]:
     conn = _get_conn()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, name_cn, description FROM parameters ORDER BY id")
+    cursor.execute("SELECT id, name, name_cn, description, embedding_json FROM parameters ORDER BY id")
     rows = cursor.fetchall()
     conn.close()
-    return [{"id": r[0], "name": r[1], "name_cn": r[2], "description": r[3]} for r in rows]
+    result = []
+    for r in rows:
+        d = {"id": r[0], "name": r[1], "name_cn": r[2], "description": r[3]}
+        if r[4]:
+            d["embedding"] = json.loads(r[4])
+        result.append(d)
+    return result
 
 
 def query_parameters_by_similarity(keyword: str) -> List[dict]:

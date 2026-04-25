@@ -26,8 +26,10 @@ class TrizAgent:
     LLM 输出 thought + action，Agent 执行 action，结果加入记忆，循环继续。
     """
 
-    def __init__(self, skill_registry: SkillRegistry | None = None, callback=None):
+    def __init__(self, skill_registry: SkillRegistry | None = None,
+                 tool_registry=None, callback=None):
         self.skill_registry = skill_registry or SkillRegistry()
+        self.tool_registry = tool_registry
         self.callback = callback
         self.client = OpenAIClient()
         self.memory: list[dict] = []  # ReAct 记忆
@@ -86,7 +88,7 @@ class TrizAgent:
                 # 执行 Skill
                 self._notify("step_start", {
                     "step_name": name,
-                    "step_type": "Skill" if name not in ("FOS", "m4_solver") else "Tool",
+                    "step_type": "Skill" if not (self.tool_registry and self.tool_registry.get(name)) else "Tool",
                     "agent_thought": decision.get("thought", ""),
                 })
 
@@ -108,7 +110,7 @@ class TrizAgent:
 
                     self._notify("step_complete", {
                         "step_name": name,
-                        "step_type": "Skill" if name not in ("FOS", "m4_solver") else "Tool",
+                        "step_type": "Skill" if not (self.tool_registry and self.tool_registry.get(name)) else "Tool",
                         "result": result,
                     })
 
@@ -197,10 +199,11 @@ class TrizAgent:
         lines.append("=== 可用 Skills ===")
         for skill_meta in self.skill_registry.list_skills():
             lines.append(f"- {skill_meta['name']}: {skill_meta['description']}")
-        lines.append("")
-        lines.append("=== 可用 Tools ===")
-        lines.append("- m4_solver: 矛盾求解（查询发明原理）")
-        lines.append("- FOS: 跨界检索（搜索参考案例）")
+        if self.tool_registry:
+            lines.append("")
+            lines.append("=== 可用 Tools ===")
+            for tool_name in self.tool_registry.list_tools():
+                lines.append(f"- {tool_name}")
 
         lines.append("")
         lines.append("请思考当前状态，决定下一步行动。")
@@ -210,26 +213,16 @@ class TrizAgent:
 
     def _execute_skill(self, name: str) -> dict:
         """执行指定 Skill 或 Tool。"""
-        if name == "FOS":
-            from triz.tools.fos_search import search_patents
-            queries = self._generate_fos_queries()
-            report = search_patents(
-                queries=queries,
-                principles=self.ctx.principles,
-                limit_per_query=5,
-            )
-            self.ctx.fos_report = report
-            self.ctx.search_queries = queries
-            return {
-                "cases": report.cases,
-                "fos_report": report.model_dump(),
-                "search_queries": queries,
-            }
+        # 先查 ToolRegistry
+        if self.tool_registry:
+            tool_func = self.tool_registry.get(name)
+            if tool_func:
+                # FOS 需要额外处理：生成查询词 + 存储结果到 ctx
+                if name == "search_patents":
+                    return self._execute_fos(tool_func)
+                return tool_func(self.ctx)
 
-        if name == "m4_solver":
-            from triz.tools.solve_contradiction import solve_contradiction
-            return solve_contradiction(self.ctx)
-
+        # 再查 SkillRegistry
         skill = self.skill_registry.get(name)
         if skill is None:
             raise ValueError(f"Skill not found: {name}")
@@ -237,6 +230,22 @@ class TrizAgent:
         input_data = self._build_skill_input(skill)
         output = skill.execute(input_data, self.ctx)
         return output.model_dump() if hasattr(output, "model_dump") else output
+
+    def _execute_fos(self, search_patents_func) -> dict:
+        """执行 FOS 跨界检索。"""
+        queries = self._generate_fos_queries()
+        report = search_patents_func(
+            queries=queries,
+            principles=self.ctx.principles,
+            limit_per_query=5,
+        )
+        self.ctx.fos_report = report
+        self.ctx.search_queries = queries
+        return {
+            "cases": report.cases,
+            "fos_report": report.model_dump(),
+            "search_queries": queries,
+        }
 
     def _generate_fos_queries(self) -> list[str]:
         """Agent 模式下为 FOS 生成搜索词（简单规则，不调 LLM）。"""
@@ -341,9 +350,9 @@ class TrizAgent:
             return f"根因: {result.get('root_param', 'N/A')}"
         elif name == "m3_formulation":
             return f"矛盾类型: {result.get('problem_type', 'N/A')}"
-        elif name == "m4_solver":
+        elif name == "solve_contradiction":
             return f"原理: {result.get('principles', [])} (Tool)"
-        elif name == "FOS":
+        elif name == "search_patents":
             report = result.get("fos_report", {})
             return f"案例: {len(result.get('cases', []))} 个, 缓存命中: {report.get('cache_hits', 0)}, API调用: {report.get('api_calls', 0)}"
         elif name == "m5_generation":

@@ -13,15 +13,21 @@ class ToolRegistry:
     def __init__(self):
         self._tools: dict[str, dict] = {}
 
-    def register(self, name: str, func: Callable, schema: dict) -> None:
+    def register(self, name: str, func: Callable, schema: dict = None) -> None:
         """注册一个 Tool。"""
         self._tools[name] = {"func": func, "schema": schema}
+
+    def get(self, name: str) -> Callable | None:
+        """按名称获取 Tool 函数。"""
+        tool = self._tools.get(name)
+        return tool["func"] if tool else None
 
     def get_schemas(self) -> list[dict]:
         """获取所有注册 Tool 的 OpenAI function schemas。"""
         return [
             {"type": "function", "function": tool["schema"]}
             for tool in self._tools.values()
+            if tool["schema"]
         ]
 
     def execute(self, name: str, arguments: dict) -> Any:
