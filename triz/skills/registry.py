@@ -4,6 +4,17 @@ from pathlib import Path
 
 from triz.skills.base import Skill
 from triz.utils.api_client import OpenAIClient
+from triz.config import MODEL_NAME, MODEL_M1, MODEL_M2, MODEL_M3, MODEL_M5, MODEL_M6
+
+
+# Skill 名称 → 环境变量模型配置的映射
+_SKILL_MODEL_MAP = {
+    "m1_modeling": MODEL_M1,
+    "m2_causal": MODEL_M2,
+    "m3_formulation": MODEL_M3,
+    "m5_generation": MODEL_M5,
+    "m6_evaluation": MODEL_M6,
+}
 
 
 class SkillRegistry:
@@ -48,10 +59,19 @@ class SkillRegistry:
                     and attr is not Skill
                     and getattr(attr, "name", None)
                 ):
+                    # 为每个 Skill 创建独立 client，使用其专属模型配置
+                    skill_model = _SKILL_MODEL_MAP.get(attr.name)
+                    if skill_model and skill_model != MODEL_NAME:
+                        skill_client = OpenAIClient(model=skill_model)
+                    elif self.client:
+                        skill_client = self.client
+                    else:
+                        skill_client = OpenAIClient()
+
                     try:
-                        skill_instance = attr(client=self.client, tool_registry=self.tool_registry)
+                        skill_instance = attr(client=skill_client, tool_registry=self.tool_registry)
                     except TypeError:
-                        skill_instance = attr(client=self.client)
+                        skill_instance = attr(client=skill_client)
                     self._skills[attr.name] = skill_instance
 
     def register(self, skill: Skill) -> None:

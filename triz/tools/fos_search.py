@@ -11,6 +11,7 @@ from pathlib import Path
 
 from triz.context import WorkflowContext, Case, SearchResult, FOSReport
 from triz.config import SERP_API_KEY, FOS_CACHE_DIR, FOS_CACHE_TTL_HOURS
+from triz.utils.vector_math import embed_text, cosine_similarity
 
 
 def search_patents(
@@ -53,6 +54,10 @@ def search_patents(
         if key not in seen_titles:
             seen_titles.add(key)
             unique_results.append(r)
+
+    # 语义过滤：用 embedding 相似度排序，保留最相关的结果
+    if unique_results and len(unique_results) > limit_per_query:
+        unique_results = _semantic_filter(queries, unique_results, limit_per_query)
 
     # 转为 Case 列表
     cases = [
@@ -99,6 +104,39 @@ def _search_serpapi(query: str, num: int = 5) -> list[SearchResult]:
             query=query,
         ))
     return cases
+
+
+def _semantic_filter(
+    queries: list[str],
+    results: list[SearchResult],
+    top_k: int,
+) -> list[SearchResult]:
+    """用 embedding 相似度对搜索结果重排序，保留最相关的 top_k 条。"""
+    try:
+        # 将搜索词合并为参考文本
+        query_text = " ".join(queries)
+        query_vec = embed_text(query_text)
+        if not query_vec:
+            return results[:top_k]
+
+        # 计算每条结果的相关性分数
+        scored = []
+        for r in results:
+            doc_text = f"{r.title} {r.snippet}"
+            doc_vec = embed_text(doc_text)
+            if not doc_vec:
+                scored.append((r, 0.0))
+                continue
+            score = cosine_similarity(query_vec, doc_vec)
+            scored.append((r, score))
+
+        # 按分数降序排列，取 top_k
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [r for r, _ in scored[:top_k]]
+
+    except Exception:
+        # 语义过滤失败时，回退到原始顺序
+        return results[:top_k]
 
 
 # --- 缓存机制 ---

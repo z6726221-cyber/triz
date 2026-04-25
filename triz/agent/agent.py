@@ -1,18 +1,17 @@
 """TrizAgent：ReAct 风格的自主 Agent，通过方法论文档约束行为。
 
-与硬编码 Orchestrator 的区别：
-- Agent 自主决定下一步调用哪个 Skill
-- 方法论约束通过 AGENT.md 提供（类似 CLAUDE.md）
-- 状态机仅作为可选兜底，不强制约束流程
+Agent 模式特点：
+- Agent 自主决定下一步调用哪个 Skill/Tool
+- Skill 输出 Markdown，Agent 阅读理解后决定下一步
+- Agent 负责上下文传递：将上游 Markdown 输出传给下游 Skill
+- 方法论约束通过 AGENT.md 提供
 """
 import json
 from pathlib import Path
 
-from triz.context import WorkflowContext, SAO, Case, SolutionDraft, Solution, QualitativeTags
-from triz.skills.registry import SkillRegistry
+from triz.context import WorkflowContext
+from triz.agent.skills.registry import AgentSkillRegistry
 from triz.tools.input_classifier import classify_input
-from triz.tools.m7_convergence import check_convergence
-from triz.utils.markdown_renderer import render_final_report
 from triz.utils.api_client import OpenAIClient
 
 
@@ -26,9 +25,9 @@ class TrizAgent:
     LLM 输出 thought + action，Agent 执行 action，结果加入记忆，循环继续。
     """
 
-    def __init__(self, skill_registry: SkillRegistry | None = None,
+    def __init__(self, skill_registry: AgentSkillRegistry | None = None,
                  tool_registry=None, callback=None):
-        self.skill_registry = skill_registry or SkillRegistry()
+        self.skill_registry = skill_registry or AgentSkillRegistry()
         self.tool_registry = tool_registry
         self.callback = callback
         self.client = OpenAIClient()
@@ -85,33 +84,49 @@ class TrizAgent:
                     })
                     continue
 
-                # 执行 Skill
+                # 判断是 Skill 还是 Tool
+                is_tool = self.tool_registry and self.tool_registry.get(name)
+                step_type = "Tool" if is_tool else "Skill"
+
                 self._notify("step_start", {
                     "step_name": name,
-                    "step_type": "Skill" if not (self.tool_registry and self.tool_registry.get(name)) else "Tool",
+                    "step_type": step_type,
                     "agent_thought": decision.get("thought", ""),
                 })
 
                 try:
-                    result = self._execute_skill(name)
-                    self._merge_result(result)
-
-                    # 记录到记忆
-                    self.memory.append({
-                        "role": "assistant",
-                        "skill": name,
-                        "thought": decision.get("thought", ""),
-                    })
-                    self.memory.append({
-                        "role": "system",
-                        "skill_result": name,
-                        "result_summary": self._summarize_result(name, result),
-                    })
+                    if is_tool:
+                        result = self._execute_tool(name)
+                        # Tool 结果以可读文本加入记忆
+                        tool_text = self._format_tool_result(name, result)
+                        self.memory.append({
+                            "role": "assistant",
+                            "skill": name,
+                            "thought": decision.get("thought", ""),
+                        })
+                        self.memory.append({
+                            "role": "system",
+                            "tool_result": name,
+                            "content": tool_text,
+                        })
+                    else:
+                        markdown = self._execute_skill(name)
+                        # Skill 的 Markdown 输出加入记忆
+                        self.memory.append({
+                            "role": "assistant",
+                            "skill": name,
+                            "thought": decision.get("thought", ""),
+                        })
+                        self.memory.append({
+                            "role": "system",
+                            "skill_result": name,
+                            "content": markdown,
+                        })
 
                     self._notify("step_complete", {
                         "step_name": name,
-                        "step_type": "Skill" if not (self.tool_registry and self.tool_registry.get(name)) else "Tool",
-                        "result": result,
+                        "step_type": step_type,
+                        "result": result if is_tool else markdown,
                     })
 
                 except Exception as e:
@@ -125,7 +140,6 @@ class TrizAgent:
                         "step_name": name,
                         "error": str(e),
                     })
-                    # 连续失败 3 次，跳过该 Skill
                     if consecutive_errors[name] >= 3:
                         self.memory.append({
                             "role": "system",
@@ -139,7 +153,6 @@ class TrizAgent:
                     "content": f"未知的 action 类型: {action.get('type')}",
                 })
 
-        # 达到最大步数，强制生成报告
         return self._generate_report()
 
     def _think_and_act(self) -> dict:
@@ -150,7 +163,7 @@ class TrizAgent:
         response = self.client.chat(
             prompt=user_prompt,
             system_prompt=system_prompt,
-            temperature=0.2,  # 稍低温度，保持方法论遵循
+            temperature=0.2,
             json_mode=True,
         )
 
@@ -175,25 +188,22 @@ class TrizAgent:
             f"当前迭代次数: {ctx.iteration}",
             f"当前反馈（如有）: {ctx.feedback or '无'}",
             "",
-            "=== 当前上下文 ===",
-            f"- SAO 数量: {len(ctx.sao_list)}",
-            f"- 负面功能: {any(s.function_type in ('harmful', 'excessive', 'insufficient') for s in ctx.sao_list)}",
-            f"- 根因: {ctx.root_param or '未提取'}",
-            f"- 矛盾类型: {ctx.problem_type or '未定型'}",
-            f"- 发明原理: {ctx.principles}",
-            f"- 案例数: {len(ctx.cases)}",
-            f"- 方案草稿数: {len(ctx.solution_drafts)}",
-            f"- 评估方案数: {len(ctx.ranked_solutions)}",
-            f"- 最高理想度: {ctx.max_ideality}",
-            "",
-            "=== 已完成的分析步骤 ===",
+            "=== 已完成的分析 ===",
         ]
 
+        # 展示完整的 Skill Markdown 输出
         for mem in self.memory:
             if mem.get("role") == "assistant":
-                lines.append(f"- 执行了 {mem['skill']}: {mem.get('thought', '')}")
+                lines.append(f"\n### 执行了 {mem.get('skill', 'unknown')}")
+                lines.append(f"思考: {mem.get('thought', '')}")
             elif mem.get("role") == "system" and "skill_result" in mem:
-                lines.append(f"  结果: {mem['result_summary']}")
+                lines.append(f"\n#### {mem['skill_result']} 输出：")
+                lines.append(mem["content"])
+            elif mem.get("role") == "system" and "tool_result" in mem:
+                lines.append(f"\n#### {mem['tool_result']} 输出：")
+                lines.append(mem["content"])
+            elif mem.get("role") == "system" and "content" in mem:
+                lines.append(f"\n> {mem['content']}")
 
         lines.append("")
         lines.append("=== 可用 Skills ===")
@@ -201,7 +211,7 @@ class TrizAgent:
             lines.append(f"- {skill_meta['name']}: {skill_meta['description']}")
             if skill_meta.get("gotchas"):
                 for g in skill_meta["gotchas"][:2]:
-                    lines.append(f"  ⚠ {g}")
+                    lines.append(f"  ! {g}")
         if self.tool_registry:
             lines.append("")
             lines.append("=== 可用 Tools ===")
@@ -210,37 +220,28 @@ class TrizAgent:
 
         lines.append("")
         lines.append("请思考当前状态，决定下一步行动。")
-        lines.append("输出 JSON: {\"thought\": \"...\", \"action\": {\"type\": \"...\", \"name\": \"...\"}}")
+        lines.append('输出 JSON: {"thought": "...", "action": {"type": "...", "name": "..."}}')
 
         return "\n".join(lines)
 
-    def _execute_skill(self, name: str) -> dict:
-        """执行指定 Skill 或 Tool。"""
-        # 先查 ToolRegistry
-        if self.tool_registry:
-            tool_func = self.tool_registry.get(name)
-            if tool_func:
-                # FOS 需要额外处理：生成查询词 + 存储结果到 ctx
-                if name == "search_patents":
-                    return self._execute_fos(tool_func)
-                return tool_func(self.ctx)
-
-        # 再查 SkillRegistry
+    def _execute_skill(self, name: str) -> str:
+        """执行 Agent Skill，返回 Markdown。"""
         skill = self.skill_registry.get(name)
         if skill is None:
             raise ValueError(f"Skill not found: {name}")
 
-        input_data = self._build_skill_input(skill)
-        output = skill.execute(input_data, self.ctx)
+        # 构建上下文：累积之前 Skill 的 Markdown 输出
+        context_markdown = self._build_context_markdown()
 
-        # 业务逻辑校验 + 自动重试
-        warnings = skill.post_validate(output, self.ctx)
+        # 执行 Skill
+        markdown = skill.execute(self.ctx, context_markdown)
+
+        # post_validate（保留业务逻辑校验）
+        warnings = skill.post_validate(markdown, self.ctx)
         if warnings and len(warnings) >= 2:
-            # 校验警告 ≥ 2，重试一次
             skill._retry_hints = warnings
-            output = skill.execute(input_data, self.ctx)
-            # 重试后再次校验
-            retry_warnings = skill.post_validate(output, self.ctx)
+            markdown = skill.execute(self.ctx, context_markdown)
+            retry_warnings = skill.post_validate(markdown, self.ctx)
             if retry_warnings:
                 self.memory.append({
                     "role": "system",
@@ -252,7 +253,16 @@ class TrizAgent:
                 "content": f"{name} 校验警告: {'; '.join(warnings)}",
             })
 
-        return output.model_dump() if hasattr(output, "model_dump") else output
+        return markdown
+
+    def _execute_tool(self, name: str) -> dict:
+        """执行 Tool，返回 dict。"""
+        tool_func = self.tool_registry.get(name)
+        if tool_func is None:
+            raise ValueError(f"Tool not found: {name}")
+        if name == "search_patents":
+            return self._execute_fos(tool_func)
+        return tool_func(self.ctx)
 
     def _execute_fos(self, search_patents_func) -> dict:
         """执行 FOS 跨界检索。"""
@@ -271,11 +281,10 @@ class TrizAgent:
         }
 
     def _generate_fos_queries(self) -> list[str]:
-        """Agent 模式下为 FOS 生成搜索词（简单规则，不调 LLM）。"""
+        """Agent 模式下为 FOS 生成搜索词。"""
         queries = []
         principles = self.ctx.principles[:3]
 
-        # 规则 1：原理 + 功能
         if self.ctx.sao_list:
             function = ""
             for sao in self.ctx.sao_list:
@@ -286,112 +295,127 @@ class TrizAgent:
                 p_str = " ".join([f"principle {p}" for p in principles])
                 queries.append(f"{p_str} {function}")
 
-        # 规则 2：矛盾描述
         if self.ctx.contradiction_desc:
             queries.append(self.ctx.contradiction_desc)
 
-        # 兜底
         if not queries:
             queries.append(self.ctx.question)
 
         return queries[:3]
 
-    def _build_skill_input(self, skill, ctx: WorkflowContext | None = None):
-        """从 WorkflowContext 提取 Skill 输入模型所需的字段。"""
-        from pydantic import BaseModel
-
-        ctx = ctx or self.ctx
-        input_data = {}
-        for field_name in skill.input_schema.model_fields:
-            if hasattr(ctx, field_name):
-                input_data[field_name] = getattr(ctx, field_name)
-        return skill.input_schema(**input_data)
-
-    def _merge_result(self, result: dict):
-        """将模块输出合并到 WorkflowContext。"""
-        from triz.context import SAO, Case, SolutionDraft, Solution, QualitativeTags
-
-        ctx = self.ctx
-        for key, value in result.items():
-            if not hasattr(ctx, key):
-                continue
-
-            if key == "sao_list" and isinstance(value, list):
-                value = [
-                    SAO.model_validate(item) if isinstance(item, dict) else item
-                    for item in value
-                ]
-            elif key == "cases" and isinstance(value, list):
-                value = [
-                    Case.model_validate(item) if isinstance(item, dict) else item
-                    for item in value
-                ]
-            elif key == "solution_drafts" and isinstance(value, list):
-                value = [
-                    SolutionDraft.model_validate(item) if isinstance(item, dict) else item
-                    for item in value
-                ]
-            elif key == "ranked_solutions" and isinstance(value, list):
-                converted = []
-                for item in value:
-                    if isinstance(item, dict):
-                        if "draft" in item and isinstance(item["draft"], dict):
-                            converted.append(Solution.model_validate(item))
-                        else:
-                            draft = SolutionDraft(
-                                title=item.get("title", ""),
-                                description=item.get("description", ""),
-                                applied_principles=item.get("applied_principles", []),
-                                resource_mapping=item.get("resource_mapping", ""),
-                            )
-                            tags = QualitativeTags(
-                                feasibility_score=item.get("feasibility_score", 3),
-                                resource_fit_score=item.get("resource_fit_score", 3),
-                                innovation_score=item.get("innovation_score", 3),
-                                uniqueness_score=item.get("uniqueness_score", 3),
-                                risk_level=item.get("risk_level", "medium"),
-                                ifr_deviation_reason=item.get("ifr_deviation_reason", ""),
-                                problem_relevance_score=item.get("problem_relevance_score", 3),
-                                logical_consistency_score=item.get("logical_consistency_score", 3),
-                            )
-                            converted.append(Solution(
-                                draft=draft, tags=tags,
-                                ideality_score=item.get("ideality_score", 0.5),
-                                evaluation_rationale=item.get("evaluation_rationale", ""),
-                            ))
-                    else:
-                        converted.append(item)
-                value = converted
-
-            setattr(ctx, key, value)
-
-    def _summarize_result(self, name: str, result: dict) -> str:
-        """简要总结执行结果。"""
-        if name == "m1_modeling":
-            return f"提取了 {len(result.get('sao_list', []))} 个 SAO"
-        elif name == "m2_causal":
-            return f"根因: {result.get('root_param', 'N/A')}"
-        elif name == "m3_formulation":
-            return f"矛盾类型: {result.get('problem_type', 'N/A')}"
+    def _format_tool_result(self, name: str, result: dict) -> str:
+        """将 Tool 结果格式化为可读文本。"""
+        if name == "search_patents":
+            return self._format_fos_result(result)
         elif name == "solve_contradiction":
-            return f"原理: {result.get('principles', [])} (Tool)"
-        elif name == "search_patents":
-            report = result.get("fos_report", {})
-            return f"案例: {len(result.get('cases', []))} 个, 缓存命中: {report.get('cache_hits', 0)}, API调用: {report.get('api_calls', 0)}"
-        elif name == "m5_generation":
-            return f"方案: {len(result.get('solution_drafts', []))} 个, 关键模式: {len(result.get('key_patterns', []))} 个"
-        elif name == "m6_evaluation":
-            return f"最高理想度: {result.get('max_ideality', 0)}"
-        return "已完成"
+            return self._format_contradiction_result(result)
+        else:
+            return json.dumps(result, ensure_ascii=False, default=str)
+
+    def _format_fos_result(self, result: dict) -> str:
+        """格式化 FOS 搜索结果为 Markdown。"""
+        lines = ["## 跨界检索结果"]
+
+        queries = result.get("search_queries", [])
+        if queries:
+            lines.append(f"搜索词：{', '.join(queries)}")
+
+        cases = result.get("cases", [])
+        if cases:
+            lines.append(f"\n检索到 {len(cases)} 条案例：")
+            for i, c in enumerate(cases, 1):
+                if isinstance(c, dict):
+                    lines.append(f"{i}. **{c.get('title', '')}** (原理 {c.get('principle_id', '')})")
+                    lines.append(f"   来源: {c.get('source', '')} | 功能: {c.get('function', '')}")
+                    lines.append(f"   描述: {c.get('description', '')}")
+                else:
+                    lines.append(f"{i}. {c}")
+
+        fos_report = result.get("fos_report")
+        if fos_report and isinstance(fos_report, dict):
+            raw = fos_report.get("raw_results", [])
+            if raw and not cases:
+                lines.append(f"\n检索到 {len(raw)} 条原始结果：")
+                for i, r in enumerate(raw[:10], 1):
+                    if isinstance(r, dict):
+                        lines.append(f"{i}. **{r.get('title', '')}**")
+                        lines.append(f"   摘要: {r.get('snippet', '')}")
+
+        if not cases and not (fos_report and isinstance(fos_report, dict) and fos_report.get("raw_results")):
+            lines.append("（未检索到相关案例）")
+
+        return "\n".join(lines)
+
+    def _format_contradiction_result(self, result: dict) -> str:
+        """格式化矛盾求解结果为 Markdown。"""
+        lines = ["## 矛盾求解结果"]
+
+        principles = result.get("principles", [])
+        if principles:
+            lines.append(f"推荐发明原理：{', '.join(str(p) for p in principles)}")
+
+        desc = result.get("contradiction_desc", "")
+        if desc:
+            lines.append(f"矛盾描述：{desc}")
+
+        return "\n".join(lines)
+
+    def _build_context_markdown(self) -> str:
+        """累积之前 Skill/Tool 的 Markdown 输出，作为下游 Skill 的背景信息。"""
+        parts = []
+        for mem in self.memory:
+            if "skill_result" in mem:
+                parts.append(f"## {mem['skill_result']} 输出\n{mem['content']}")
+            elif "tool_result" in mem:
+                parts.append(f"## {mem['tool_result']} 输出\n{mem['content']}")
+        return "\n\n".join(parts)
 
     def _generate_report(self) -> str:
-        """生成最终报告。"""
-        contradiction = self.ctx.contradiction_desc or "未识别矛盾"
-        report = render_final_report(
-            self.ctx.question, contradiction, self.ctx.ranked_solutions, "Agent 完成分析"
+        """基于 memory 中的所有 Markdown 输出，用 LLM 生成最终报告。"""
+        # 收集所有 Skill/Tool 的输出
+        analysis_parts = []
+        for mem in self.memory:
+            if "skill_result" in mem:
+                analysis_parts.append(f"### {mem['skill_result']}\n{mem['content']}")
+            elif "tool_result" in mem:
+                analysis_parts.append(f"### {mem['tool_result']}\n{mem['content']}")
+
+        analysis_text = "\n\n".join(analysis_parts) if analysis_parts else "（无分析结果）"
+
+        system_prompt = (
+            "你是 TRIZ 报告撰写专家。基于以下分析过程和结果，生成一份结构化的 TRIZ 解决方案报告。\n\n"
+            "报告格式要求：\n"
+            "# TRIZ 解决方案报告\n\n"
+            "## 问题概述\n（简述用户问题）\n\n"
+            "## 功能分析\n（SAO 三元组、资源、IFR）\n\n"
+            "## 根因分析\n（因果链、根因参数）\n\n"
+            "## 矛盾定义\n（矛盾类型、矛盾对）\n\n"
+            "## 解决方案\n（基于发明原理的具体方案，包含应用原理、方案描述、资源映射）\n\n"
+            "## 方案评估\n（评分、排序、推荐）\n\n"
+            "要求：\n"
+            "- 保留分析中的关键数据和结论\n"
+            "- 方案部分要具体、可执行\n"
+            "- 如果某个步骤没有执行或结果为空，跳过该章节\n"
+            "- 使用中文输出"
         )
+
+        user_prompt = (
+            f"用户问题: {self.ctx.question}\n\n"
+            f"=== 分析过程和结果 ===\n\n{analysis_text}\n\n"
+            "请基于以上内容生成最终报告。"
+        )
+
+        report = self._call_llm(system_prompt, user_prompt)
         self._notify("report", {"content": report})
         return report
+
+    def _call_llm(self, system_prompt: str, user_prompt: str) -> str:
+        """调用 LLM，返回文本。"""
+        return self.client.chat(
+            prompt=user_prompt,
+            system_prompt=system_prompt,
+            temperature=0.3,
+        )
 
     def _generate_clarification(self, reason: str) -> str:
         return f"**需要补充信息**：{reason}\n\n请提供更多细节，例如：具体的使用场景、现有的限制条件、已尝试的解决方案等。"
