@@ -232,20 +232,23 @@ def test_orchestrator_continue_resets_iteration_state():
             }
         return {}
 
+    def mock_solve(ctx=None, **kwargs):
+        return {"principles": [1], "improve_param_id": 1, "worsen_param_id": 2}
+
     with patch.object(input_classifier, 'classify_input', return_value={"category": "engineering", "proceed": True, "response": None}):
         with patch.object(orch, '_run_skill', side_effect=mock_run):
-            with patch('triz.tools.m7_convergence.check_convergence') as mock_m7:
-                # 第一次 CONTINUE，第二次 TERMINATE
-                mock_m7.side_effect = [
-                    ConvergenceDecision(action="CONTINUE", reason="需改进", feedback="试其他原理"),
-                    ConvergenceDecision(action="TERMINATE", reason="完成", feedback=""),
-                ]
-                result = orch.run_workflow("test")
+            with patch('triz.tools.solve_contradiction.solve_contradiction', side_effect=mock_solve):
+                with patch('triz.tools.m7_convergence.check_convergence') as mock_m7:
+                    # 第一次 CONTINUE，第二次 TERMINATE
+                    mock_m7.side_effect = [
+                        ConvergenceDecision(action="CONTINUE", reason="需改进", feedback="试其他原理"),
+                        ConvergenceDecision(action="TERMINATE", reason="完成", feedback=""),
+                    ]
+                    result = orch.run_workflow("test")
 
     # 验证最终报告生成（render_final_report 输出包含 "TRIZ 解决方案报告"）
     assert "TRIZ 解决方案报告" in result
-    # M4/M5/M6 应该被调用两次（两次迭代）
-    assert call_log.count("m4_solver") == 2
+    # M5/M6 应该被调用两次（两次迭代）
     assert call_log.count("m5_generation") == 2
     assert call_log.count("m6_evaluation") == 2
 

@@ -17,6 +17,24 @@ class Case(BaseModel):
     function: str
 
 
+class SearchResult(BaseModel):
+    """单条搜索结果（来自 SerpApi 或缓存）。"""
+    title: str
+    snippet: str
+    url: str = ""
+    source: str = "Google Patents"
+    query: str = ""
+
+
+class FOSReport(BaseModel):
+    """FOS 返回的结构化报告。"""
+    cases: list[Case] = []
+    raw_results: list[SearchResult] = []
+    queries_used: list[str] = []
+    cache_hits: int = 0
+    api_calls: int = 0
+
+
 class SolutionDraft(BaseModel):
     title: str
     description: str
@@ -76,6 +94,8 @@ class WorkflowContext(BaseModel):
 
     # FOS 输出
     cases: List[Case] = []
+    search_queries: List[str] = []
+    fos_report: Optional["FOSReport"] = None
 
     # M5 输出
     solution_drafts: List[SolutionDraft] = []

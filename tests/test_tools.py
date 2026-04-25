@@ -1,7 +1,7 @@
 import pytest
 import os
 from triz.context import WorkflowContext, SAO, ConvergenceDecision, Solution, SolutionDraft, QualitativeTags
-from triz.tools.m3_formulation import formulate_problem
+from tests.helpers import formulate_problem
 from triz.tools.m7_convergence import check_convergence
 from triz.tools.m2_gate import should_trigger_m2
 from triz.tools.fos_search import search_cases
@@ -195,7 +195,18 @@ def setup_db(tmp_path_factory):
         os.remove(db_path)
 
 
-def test_search_local_cases():
+def test_search_local_cases(monkeypatch):
+    from triz.context import SearchResult
+
+    def mock_search_serpapi(query, num=5):
+        return [
+            SearchResult(title="Test Patent", snippet="test snippet", source="Google Patents", query=query),
+        ]
+
+    monkeypatch.setattr("triz.tools.fos_search._search_serpapi", mock_search_serpapi)
+    monkeypatch.setattr("triz.tools.fos_search._get_cache", lambda q: None)
+    monkeypatch.setattr("triz.tools.fos_search._set_cache", lambda q, r: None)
+
     ctx = WorkflowContext(question="如何提高手术刀片耐用性")
     ctx.principles = [15, 28]
     ctx.sao_list = [SAO(subject="刀片", action="切割", object="组织", function_type="useful")]
@@ -206,12 +217,11 @@ def test_search_local_cases():
 
 
 def test_search_returns_empty_when_no_match():
-    """本地无匹配且SerpApi不可用时返回空。这里测试本地无匹配的场景。"""
+    """无匹配且SerpApi不可用时返回空。"""
     ctx = WorkflowContext(question="test")
     ctx.principles = [999]
     ctx.sao_list = []
 
     cases = search_cases(ctx)
-    # SerpApi 可能返回结果，所以只验证本地部分为空
-    local_cases = [c for c in cases if c.source == "本地库"]
-    assert local_cases == []
+    # SerpApi 未配置时返回空
+    assert cases == []

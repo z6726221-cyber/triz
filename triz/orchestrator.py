@@ -6,7 +6,8 @@ from triz.core.tool_registry import ToolRegistry
 from triz.skills.registry import SkillRegistry
 from triz.tools.m2_gate import should_trigger_m2
 from triz.tools.m7_convergence import check_convergence
-from triz.tools.fos_search import search_cases
+from triz.tools.fos_search import search_patents
+from triz.tools.solve_contradiction import solve_contradiction
 from triz.tools.query_parameters import map_to_parameters, query_parameters
 from triz.tools.query_matrix import query_matrix
 from triz.tools.query_separation import query_separation
@@ -65,6 +66,35 @@ def _register_m4_tools() -> ToolRegistry:
             },
         }
     )
+    registry.register(
+        name="search_patents",
+        func=search_patents,
+        schema={
+            "name": "search_patents",
+            "description": "接收搜索词列表，执行 Google Patents 搜索，返回结构化报告",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "queries": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "搜索词列表（英文，3-8个关键词）",
+                    },
+                    "principles": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": "发明原理编号列表",
+                    },
+                    "limit_per_query": {
+                        "type": "integer",
+                        "description": "每个 query 最多返回的结果数",
+                        "default": 5,
+                    },
+                },
+                "required": ["queries", "principles"],
+            },
+        }
+    )
     return registry
 
 
@@ -107,28 +137,21 @@ class Orchestrator:
             priority=1,
         )
 
-        # 节点 2: 矛盾求解
+        # 节点 2: 矛盾求解（纯 Tool，不调 LLM）
         registry.register_node_route(
             "solver",
-            [("m4_solver", "Skill")],
+            [("solve_contradiction", "Tool")],
             priority=1,
         )
 
-        # 节点 3: 跨界检索
+        # 节点 3: 搜索与方案生成（合并原 Node 3+4）
         registry.register_node_route(
-            "search",
-            [("FOS", "Tool", search_cases)],
-            priority=1,
-        )
-
-        # 节点 4: 方案生成
-        registry.register_node_route(
-            "generation",
+            "search_generation",
             [("m5_generation", "Skill")],
             priority=1,
         )
 
-        # 节点 5: 方案评估
+        # 节点 4: 方案评估
         registry.register_node_route(
             "evaluation",
             [("m6_evaluation", "Skill")],
@@ -158,7 +181,7 @@ class Orchestrator:
         steps = self.skill_registry.resolve_node("modeling", ctx)
         if not steps:
             raise RuntimeError("未找到 'modeling' 节点的路由配置")
-        ctx = self._execute_node("问题建模", 1, 5, ctx, steps)
+        ctx = self._execute_node("问题建模", 1, 4, ctx, steps)
 
         if not ctx.sao_list:
             msg = self._generate_clarification("无法从问题中提取功能模型，请补充描述")
@@ -171,38 +194,18 @@ class Orchestrator:
             steps = self.skill_registry.resolve_node("solver", ctx)
             if not steps:
                 raise RuntimeError("未找到 'solver' 节点的路由配置")
-            ctx = self._execute_node("矛盾求解", 2, 5, ctx, steps)
+            ctx = self._execute_node("矛盾求解", 2, 4, ctx, steps)
 
             if not ctx.principles:
-                # Fallback: 基于 candidate_attributes 直接查询参数
-                fallback_output = self._try_fallback("m4_solver", Exception("empty principles"), ctx)
-                if fallback_output and fallback_output.get("principles"):
-                    ctx = ctx.model_copy(update={
-                        "principles": fallback_output["principles"],
-                        "match_conf": fallback_output.get("match_conf", 0.5),
-                        "improve_param_id": fallback_output.get("improve_param_id"),
-                        "worsen_param_id": fallback_output.get("worsen_param_id"),
-                    })
-                    self._notify("step_complete", {
-                        "step_name": "m4_solver", "step_type": "Skill",
-                        "result": {**fallback_output, "fallback": True}
-                    })
-                else:
-                    msg = self._generate_fallback("无法从矛盾定义中匹配到发明原理")
-                    self._notify("report", {"content": msg})
-                    return msg
+                msg = self._generate_fallback("无法从矛盾定义中匹配到发明原理")
+                self._notify("report", {"content": msg})
+                return msg
 
-            # 跨界检索
-            steps = self.skill_registry.resolve_node("search", ctx)
+            # 搜索与方案生成（M5 内部调用 FOS）
+            steps = self.skill_registry.resolve_node("search_generation", ctx)
             if not steps:
-                raise RuntimeError("未找到 'search' 节点的路由配置")
-            ctx = self._execute_node("跨界检索", 3, 5, ctx, steps)
-
-            # 方案生成
-            steps = self.skill_registry.resolve_node("generation", ctx)
-            if not steps:
-                raise RuntimeError("未找到 'generation' 节点的路由配置")
-            ctx = self._execute_node("方案生成", 4, 5, ctx, steps)
+                raise RuntimeError("未找到 'search_generation' 节点的路由配置")
+            ctx = self._execute_node("搜索与方案生成", 3, 4, ctx, steps)
 
             if not ctx.solution_drafts:
                 # Fallback: 基于已获取的原理和案例构造默认方案
@@ -224,7 +227,7 @@ class Orchestrator:
             steps = self.skill_registry.resolve_node("evaluation", ctx)
             if not steps:
                 raise RuntimeError("未找到 'evaluation' 节点的路由配置")
-            ctx = self._execute_node("方案评估", 5, 5, ctx, steps)
+            ctx = self._execute_node("方案评估", 4, 4, ctx, steps)
 
             # 收敛控制
             decision = check_convergence(ctx)
@@ -253,6 +256,8 @@ class Orchestrator:
                 ctx.history_log.append({"max_ideality": ctx.max_ideality})
                 ctx.principles = []
                 ctx.cases = []
+                ctx.search_queries = []
+                ctx.fos_report = None
                 ctx.solution_drafts = []
                 ctx.ranked_solutions = []
                 ctx.max_ideality = 0.0
@@ -288,7 +293,11 @@ class Orchestrator:
                 if step_type == "Skill":
                     result = self._run_skill(step_name, ctx)
                 else:
-                    result = step_func(ctx)
+                    # Tool: 如果有 step_func 就用，否则按名称查找
+                    func = step_func
+                    if func is None:
+                        func = self._resolve_tool(step_name)
+                    result = func(ctx)
             except Exception as e:
                 self._notify("step_error", {
                     "step_name": step_name, "step_type": step_type, "error": str(e)
@@ -324,6 +333,13 @@ class Orchestrator:
 
         # Pydantic 模型 → dict
         return output.model_dump() if hasattr(output, "model_dump") else output
+
+    def _resolve_tool(self, name: str):
+        """按名称查找 Tool 函数（运行时导入，支持 mock）。"""
+        if name == "solve_contradiction":
+            from triz.tools.solve_contradiction import solve_contradiction
+            return solve_contradiction
+        return lambda ctx: {}
 
     def _build_skill_input(self, skill, ctx: WorkflowContext):
         """从 WorkflowContext 提取 Skill 输入模型所需的字段。"""
@@ -366,6 +382,9 @@ class Orchestrator:
                     Case.model_validate(item) if isinstance(item, dict) else item
                     for item in value
                 ]
+            elif key == "fos_report" and isinstance(value, dict):
+                from triz.context import FOSReport
+                value = FOSReport.model_validate(value)
             elif key == "solution_drafts" and isinstance(value, list):
                 value = [
                     SolutionDraft.model_validate(item) if isinstance(item, dict) else item

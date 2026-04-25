@@ -1,4 +1,4 @@
-"""M3 问题定型 Tool：从根因提取矛盾类型和矛盾描述（自然语言）"""
+"""测试辅助函数。"""
 from triz.context import WorkflowContext
 
 
@@ -8,14 +8,12 @@ def formulate_problem(ctx: WorkflowContext) -> dict:
     key_problem = ctx.key_problem or ""
     evidence = ctx.causal_chain.copy() if ctx.causal_chain else []
 
-    # Step 1: 识别矛盾类型
     combined_text = f"{root_param} {key_problem}"
     if "既要" in combined_text or "又要" in combined_text or "同时" in combined_text:
         problem_type = "phys"
     else:
         problem_type = "tech"
 
-    # Step 2: 提取矛盾描述
     contradiction_desc = _extract_contradiction_desc(problem_type, root_param, key_problem)
 
     return {

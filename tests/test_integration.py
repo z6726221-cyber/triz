@@ -3,7 +3,7 @@ import pytest
 import os
 from triz.context import WorkflowContext, SAO, Solution, SolutionDraft, QualitativeTags
 from triz.tools.m2_gate import should_trigger_m2
-from triz.tools.m3_formulation import formulate_problem
+from tests.helpers import formulate_problem
 from triz.tools.query_parameters import query_parameters
 from triz.tools.query_matrix import query_matrix
 from triz.tools.m7_convergence import check_convergence

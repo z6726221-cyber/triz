@@ -21,6 +21,10 @@ MODEL_M6 = os.getenv("MODEL_M6", MODEL_NAME)
 
 SERP_API_KEY = os.getenv("SERP_API_KEY", "")
 
+# FOS 缓存配置
+FOS_CACHE_DIR = BASE_DIR / "data" / "fos_cache"
+FOS_CACHE_TTL_HOURS = int(os.getenv("FOS_CACHE_TTL_HOURS", "168"))  # 默认7天
+
 MAX_ITERATIONS = 5
 MIN_IDEALITY_THRESHOLD = 0.3
 SIMILARITY_THRESHOLD = 0.6

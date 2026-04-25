@@ -58,7 +58,7 @@ class TrizAgent:
 
         # ReAct 主循环
         max_steps = 20
-        consecutive_errors = {}  # skill_name -> count
+        consecutive_errors = {}  # name -> count
         for step in range(max_steps):
             # 1. Agent 思考并决策
             decision = self._think_and_act()
@@ -75,8 +75,8 @@ class TrizAgent:
                 return self._generate_report()
 
             elif action["type"] == "skill":
-                skill_name = action.get("name", "")
-                if not skill_name:
+                name = action.get("name", "")
+                if not name:
                     self.memory.append({
                         "role": "system",
                         "content": "错误：skill 名称不能为空，请重新决策。",
@@ -85,51 +85,51 @@ class TrizAgent:
 
                 # 执行 Skill
                 self._notify("step_start", {
-                    "step_name": skill_name,
-                    "step_type": "Skill" if skill_name != "FOS" else "Tool",
+                    "step_name": name,
+                    "step_type": "Skill" if name not in ("FOS", "m4_solver") else "Tool",
                     "agent_thought": decision.get("thought", ""),
                 })
 
                 try:
-                    result = self._execute_skill(skill_name)
+                    result = self._execute_skill(name)
                     self._merge_result(result)
 
                     # 记录到记忆
                     self.memory.append({
                         "role": "assistant",
-                        "skill": skill_name,
+                        "skill": name,
                         "thought": decision.get("thought", ""),
                     })
                     self.memory.append({
                         "role": "system",
-                        "skill_result": skill_name,
-                        "result_summary": self._summarize_result(skill_name, result),
+                        "skill_result": name,
+                        "result_summary": self._summarize_result(name, result),
                     })
 
                     self._notify("step_complete", {
-                        "step_name": skill_name,
-                        "step_type": "Skill" if skill_name != "FOS" else "Tool",
+                        "step_name": name,
+                        "step_type": "Skill" if name not in ("FOS", "m4_solver") else "Tool",
                         "result": result,
                     })
 
                 except Exception as e:
-                    consecutive_errors[skill_name] = consecutive_errors.get(skill_name, 0) + 1
-                    err_msg = f"执行 {skill_name} 出错 ({consecutive_errors[skill_name]}/3): {str(e)}"
+                    consecutive_errors[name] = consecutive_errors.get(name, 0) + 1
+                    err_msg = f"执行 {name} 出错 ({consecutive_errors[name]}/3): {str(e)}"
                     self.memory.append({
                         "role": "system",
                         "content": err_msg,
                     })
                     self._notify("step_error", {
-                        "step_name": skill_name,
+                        "step_name": name,
                         "error": str(e),
                     })
                     # 连续失败 3 次，跳过该 Skill
-                    if consecutive_errors[skill_name] >= 3:
+                    if consecutive_errors[name] >= 3:
                         self.memory.append({
                             "role": "system",
-                            "content": f"{skill_name} 连续失败 3 次，跳过此步骤。",
+                            "content": f"{name} 连续失败 3 次，跳过此步骤。",
                         })
-                        consecutive_errors[skill_name] = 0
+                        consecutive_errors[name] = 0
 
             else:
                 self.memory.append({
@@ -197,6 +197,9 @@ class TrizAgent:
         lines.append("=== 可用 Skills ===")
         for skill_meta in self.skill_registry.list_skills():
             lines.append(f"- {skill_meta['name']}: {skill_meta['description']}")
+        lines.append("")
+        lines.append("=== 可用 Tools ===")
+        lines.append("- m4_solver: 矛盾求解（查询发明原理）")
         lines.append("- FOS: 跨界检索（搜索参考案例）")
 
         lines.append("")
@@ -205,20 +208,61 @@ class TrizAgent:
 
         return "\n".join(lines)
 
-    def _execute_skill(self, skill_name: str) -> dict:
+    def _execute_skill(self, name: str) -> dict:
         """执行指定 Skill 或 Tool。"""
-        if skill_name == "FOS":
-            from triz.tools.fos_search import search_cases
-            cases = search_cases(self.ctx)
-            return {"cases": cases}
+        if name == "FOS":
+            from triz.tools.fos_search import search_patents
+            queries = self._generate_fos_queries()
+            report = search_patents(
+                queries=queries,
+                principles=self.ctx.principles,
+                limit_per_query=5,
+            )
+            self.ctx.fos_report = report
+            self.ctx.search_queries = queries
+            return {
+                "cases": report.cases,
+                "fos_report": report.model_dump(),
+                "search_queries": queries,
+            }
 
-        skill = self.skill_registry.get(skill_name)
+        if name == "m4_solver":
+            from triz.tools.solve_contradiction import solve_contradiction
+            return solve_contradiction(self.ctx)
+
+        skill = self.skill_registry.get(name)
         if skill is None:
-            raise ValueError(f"Skill not found: {skill_name}")
+            raise ValueError(f"Skill not found: {name}")
 
         input_data = self._build_skill_input(skill)
         output = skill.execute(input_data, self.ctx)
         return output.model_dump() if hasattr(output, "model_dump") else output
+
+    def _generate_fos_queries(self) -> list[str]:
+        """Agent 模式下为 FOS 生成搜索词（简单规则，不调 LLM）。"""
+        queries = []
+        principles = self.ctx.principles[:3]
+
+        # 规则 1：原理 + 功能
+        if self.ctx.sao_list:
+            function = ""
+            for sao in self.ctx.sao_list:
+                if sao.function_type == "useful":
+                    function = sao.action
+                    break
+            if function:
+                p_str = " ".join([f"principle {p}" for p in principles])
+                queries.append(f"{p_str} {function}")
+
+        # 规则 2：矛盾描述
+        if self.ctx.contradiction_desc:
+            queries.append(self.ctx.contradiction_desc)
+
+        # 兜底
+        if not queries:
+            queries.append(self.ctx.question)
+
+        return queries[:3]
 
     def _build_skill_input(self, skill, ctx: WorkflowContext | None = None):
         """从 WorkflowContext 提取 Skill 输入模型所需的字段。"""
@@ -289,21 +333,22 @@ class TrizAgent:
 
             setattr(ctx, key, value)
 
-    def _summarize_result(self, skill_name: str, result: dict) -> str:
+    def _summarize_result(self, name: str, result: dict) -> str:
         """简要总结执行结果。"""
-        if skill_name == "m1_modeling":
+        if name == "m1_modeling":
             return f"提取了 {len(result.get('sao_list', []))} 个 SAO"
-        elif skill_name == "m2_causal":
+        elif name == "m2_causal":
             return f"根因: {result.get('root_param', 'N/A')}"
-        elif skill_name == "m3_formulation":
+        elif name == "m3_formulation":
             return f"矛盾类型: {result.get('problem_type', 'N/A')}"
-        elif skill_name == "m4_solver":
-            return f"原理: {result.get('principles', [])}"
-        elif skill_name == "FOS":
-            return f"案例: {len(result.get('cases', []))} 个"
-        elif skill_name == "m5_generation":
-            return f"方案: {len(result.get('solution_drafts', []))} 个"
-        elif skill_name == "m6_evaluation":
+        elif name == "m4_solver":
+            return f"原理: {result.get('principles', [])} (Tool)"
+        elif name == "FOS":
+            report = result.get("fos_report", {})
+            return f"案例: {len(result.get('cases', []))} 个, 缓存命中: {report.get('cache_hits', 0)}, API调用: {report.get('api_calls', 0)}"
+        elif name == "m5_generation":
+            return f"方案: {len(result.get('solution_drafts', []))} 个, 关键模式: {len(result.get('key_patterns', []))} 个"
+        elif name == "m6_evaluation":
             return f"最高理想度: {result.get('max_ideality', 0)}"
         return "已完成"
 

@@ -67,6 +67,8 @@ class OpenAIClient:
                     delay = ra
                 else:
                     delay = self.BASE_DELAY * (2 ** attempt)
+                # 限制最大等待时间，避免无限阻塞
+                delay = min(delay, 60)
                 time.sleep(delay)
         raise RuntimeError("Unexpected exit from retry loop")
 
@@ -81,6 +83,7 @@ class OpenAIClient:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
+            "timeout": 90,
         }
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
@@ -109,5 +112,6 @@ class OpenAIClient:
                 tools=tools,
                 tool_choice="auto",
                 temperature=temperature,
+                timeout=90,
             )
         )

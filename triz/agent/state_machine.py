@@ -21,7 +21,7 @@ STATE_SKILLS: dict[str, list[str]] = {
     "modeling": ["m1_modeling", "m2_causal", "m3_formulation"],
     "causal": ["m2_causal"],
     "formulation": ["m3_formulation"],
-    "solving": ["m4_solver"],
+    "solving": ["m4_solver"],  # 实际是 Tool (solve_contradiction)，Agent 内部路由
     "search": ["FOS"],
     "generation": ["m5_generation"],
     "evaluation": ["m6_evaluation"],
