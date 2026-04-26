@@ -30,19 +30,47 @@ class AgentSkill(ABC):
         self._gotchas_cache: list[str] | None = None
         self._retry_hints: list[str] | None = None
 
-    @abstractmethod
     def execute(self, ctx: WorkflowContext, context_markdown: str = "") -> str:
         """执行 Skill，返回 Markdown。
 
         Args:
             ctx: 工作流上下文（含 question 等基本信息）
             context_markdown: Agent 传入的上游分析结果（Markdown）
+
+        基类提供默认实现，子类一般无需覆盖。
+        如需自定义，可覆盖 _build_user_prompt() 或整个 execute()。
         """
-        pass
+        system_prompt = self._load_prompt()
+
+        # 允许子类注入额外的 reference 内容
+        extra = self._load_extra_references()
+        if extra:
+            system_prompt += "\n\n" + extra
+
+        user_prompt = self._build_user_prompt(ctx, context_markdown)
+        return self._call_llm(system_prompt=system_prompt, user_prompt=user_prompt)
+
+    def _build_user_prompt(self, ctx: WorkflowContext, context_markdown: str) -> str:
+        """构建 user prompt。子类可覆盖以自定义。"""
+        parts = [f"用户问题：{ctx.question}"]
+        if context_markdown:
+            parts.append(f"\n之前的分析结果：\n{context_markdown}")
+        return "\n".join(parts)
+
+    def _load_extra_references(self) -> str:
+        """加载额外的参考文档，拼接到 system_prompt。子类可覆盖。"""
+        return ""
 
     def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
         """业务逻辑校验，返回警告列表。子类可覆盖。"""
         return []
+
+    def post_process(self, output: str) -> dict | None:
+        """Skill 输出后自动解析，返回结构化数据。子类可覆盖。
+
+        基类默认返回 None，表示不做结构化解析。
+        """
+        return None
 
     def _call_llm(self, system_prompt: str, user_prompt: str) -> str:
         """调用 LLM，返回文本。"""

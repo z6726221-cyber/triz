@@ -322,6 +322,15 @@ class TrizAgent:
                 }
             )
 
+        # 自动解析结构化数据（如 M3 解析矛盾参数）
+        parsed = skill.post_process(markdown)
+        if parsed:
+            import json
+            self.memory.append({
+                "role": "system",
+                "content": f"{name} 结构化结果：{json.dumps(parsed, ensure_ascii=False)}",
+            })
+
         return markdown
 
     def _execute_tool(self, name: str) -> dict:

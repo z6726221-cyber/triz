@@ -16,22 +16,13 @@ class M1ModelingSkill(AgentSkill):
     """
 
     name = "m1_modeling"
-    description = "当用户提出工程问题，需要提取功能模型（SAO三元组、资源、IFR）时使用"
+    description = """当用户提出工程问题，需要：
+- 拆解功能模型（对象、动作、属性）
+- 提取 SAO 三元组
+- 盘点可用资源
+- 定义理想最终结果（IFR）
+适用场景：新工程问题首次分析，或需要重新建模时。"""
     temperature = 0.1
-
-    def execute(self, ctx: WorkflowContext, context_markdown: str = "") -> str:
-        """执行功能建模，返回 Markdown。"""
-        system_prompt = self._load_prompt()
-
-        user_parts = [f"用户问题：{ctx.question}"]
-        if context_markdown:
-            user_parts.append(f"\n之前的分析结果：\n{context_markdown}")
-        user_prompt = "\n".join(user_parts)
-
-        return self._call_llm(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-        )
 
     def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
         warnings = []

@@ -4,9 +4,9 @@ from typing import Callable, Any
 
 from triz_agent.tools.fos_search import search_patents
 from triz_agent.tools.solve_contradiction import solve_contradiction
-from triz_agent.tools.query_parameters import map_to_parameters, query_parameters
-from triz_agent.tools.query_matrix import query_matrix
-from triz_agent.tools.query_separation import query_separation
+from triz_agent.tools.core.query_parameters import map_to_parameters, query_parameters
+from triz_agent.tools.core.query_matrix import query_matrix
+from triz_agent.tools.core.query_separation import query_separation
 
 
 class ToolRegistry:

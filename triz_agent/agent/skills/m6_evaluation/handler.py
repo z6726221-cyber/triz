@@ -13,27 +13,17 @@ class M6EvaluationSkill(AgentSkill):
     """
 
     name = "m6_evaluation"
-    description = "当需要评估方案质量、筛选最优解、决定是否需要迭代改进时使用"
+    description = """当 M5 已生成方案草案后，需要：
+- 独立评审每个方案的 8 维度量化评分
+- 计算理想度（Ideality）
+- 按理想度排序，给出推荐方案
+- 决定是否需要迭代改进
+适用场景：多个方案需要评估筛选，或判断当前方案是否足够好时。"""
     temperature = 0.3
 
-    def execute(self, ctx: WorkflowContext, context_markdown: str = "") -> str:
-        """执行方案评估，返回 Markdown。"""
-        system_prompt = self._load_prompt()
-
-        # 渐进式披露：加载详细评分标准
-        rubric = self._load_reference("scoring_rubric.md")
-        if rubric:
-            system_prompt += "\n\n" + rubric
-
-        user_parts = [f"用户问题：{ctx.question}"]
-        if context_markdown:
-            user_parts.append(f"\n之前的分析结果：\n{context_markdown}")
-        user_prompt = "\n".join(user_parts)
-
-        return self._call_llm(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-        )
+    def _load_extra_references(self) -> str:
+        """加载详细评分标准。"""
+        return self._load_reference("scoring_rubric.md") or ""
 
     def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
         warnings = []

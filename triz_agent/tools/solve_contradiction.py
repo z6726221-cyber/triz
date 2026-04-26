@@ -1,8 +1,8 @@
 """矛盾求解 Tool：根据矛盾类型查询发明原理（替代 M4 Skill）。"""
 
-from triz_agent.tools.query_parameters import map_to_parameters
-from triz_agent.tools.query_matrix import query_matrix
-from triz_agent.tools.query_separation import query_separation
+from triz_agent.tools.core.query_parameters import map_to_parameters
+from triz_agent.tools.core.query_matrix import query_matrix
+from triz_agent.tools.core.query_separation import query_separation
 
 
 def solve_contradiction(ctx=None, **kwargs) -> dict:
@@ -40,6 +40,7 @@ def solve_contradiction(ctx=None, **kwargs) -> dict:
     if problem_type == "phys":
         result = query_separation(contradiction_desc)
         return {
+            "problem_type": "phys",
             "principles": result["principles"],
             "improve_param_id": None,
             "worsen_param_id": None,
@@ -65,6 +66,7 @@ def solve_contradiction(ctx=None, **kwargs) -> dict:
             principles = query_matrix(imp_id, wors_id)
             avg_score = (mapping["improve_score"] + mapping["worsen_score"]) / 2
             return {
+                "problem_type": "tech",
                 "principles": principles,
                 "improve_param_id": imp_id,
                 "worsen_param_id": wors_id,
@@ -73,7 +75,7 @@ def solve_contradiction(ctx=None, **kwargs) -> dict:
             }
 
     # 兜底：从 contradiction_desc 或 candidate_attributes 关键词查询
-    from triz_agent.tools.query_parameters import query_parameters
+    from triz_agent.tools.core.query_parameters import query_parameters
 
     keywords = candidate_attributes or []
     if contradiction_desc:
@@ -83,6 +85,7 @@ def solve_contradiction(ctx=None, **kwargs) -> dict:
     if len(params) >= 2:
         principles = query_matrix(params[0]["id"], params[1]["id"])
         return {
+            "problem_type": "tech",
             "principles": principles,
             "improve_param_id": params[0]["id"],
             "worsen_param_id": params[1]["id"],
@@ -92,6 +95,7 @@ def solve_contradiction(ctx=None, **kwargs) -> dict:
     elif len(params) == 1:
         principles = query_matrix(params[0]["id"], 39)
         return {
+            "problem_type": "tech",
             "principles": principles,
             "improve_param_id": params[0]["id"],
             "worsen_param_id": 39,
@@ -100,6 +104,7 @@ def solve_contradiction(ctx=None, **kwargs) -> dict:
         }
 
     return {
+        "problem_type": "tech",
         "principles": [],
         "improve_param_id": None,
         "worsen_param_id": None,

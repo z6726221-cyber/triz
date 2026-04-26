@@ -13,22 +13,12 @@ class M2CausalSkill(AgentSkill):
     """
 
     name = "m2_causal"
-    description = "当存在负面功能（harmful/excessive/insufficient）需要追溯根因时使用"
+    description = """当 M1 功能建模已完成，存在负面功能（harmful/excessive/insufficient）时，需要：
+- 执行 RCA 根因分析
+- 构建因果链
+- 识别根因节点和候选物理属性
+适用场景：功能模型已建立，需要追溯问题根源时。"""
     temperature = 0.3
-
-    def execute(self, ctx: WorkflowContext, context_markdown: str = "") -> str:
-        """执行根因分析，返回 Markdown。"""
-        system_prompt = self._load_prompt()
-
-        user_parts = [f"用户问题：{ctx.question}"]
-        if context_markdown:
-            user_parts.append(f"\n之前的分析结果：\n{context_markdown}")
-        user_prompt = "\n".join(user_parts)
-
-        return self._call_llm(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-        )
 
     def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
         warnings = []
