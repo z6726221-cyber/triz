@@ -79,7 +79,7 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
         response = self._call_llm(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            json_mode=True,
+            json_mode=False,
         )
 
         raw = self._parse_json(response)
@@ -134,7 +134,7 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
         response = self._call_llm(
             system_prompt=search_system,
             user_prompt=search_prompt,
-            json_mode=True,
+            json_mode=False,
         )
 
         search_data = self._parse_json(response)
@@ -255,7 +255,7 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
         response = self._call_llm(
             system_prompt=system_prompt,
             user_prompt=retry_prompt,
-            json_mode=True,
+            json_mode=False,
         )
 
         return self._parse_json(response)

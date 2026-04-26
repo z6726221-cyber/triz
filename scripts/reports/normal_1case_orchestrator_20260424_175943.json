@@ -1,0 +1,34 @@
+{
+  "test_name": "normal_1case",
+  "mode": "orchestrator",
+  "timestamp": "2026-04-24T17:59:43.647846",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "timeouts": 0,
+  "avg_time": 217.51,
+  "results": [
+    {
+      "question": "汽车发动机噪音大，油耗高",
+      "success": true,
+      "elapsed_seconds": 217.51,
+      "report_length": 800,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "# TRIZ 解决方案报告\n\n## 问题\n汽车发动机噪音大，油耗高\n\n## 核心矛盾\n改善混合均匀度导致压力波动恶化\n\n## 推荐方案（按理想度排序）\n\n### 方案 1 [理想度: 0.83 | 问题匹配: 5/5 | 逻辑一致性: 5/5]\n**原理**: [27, 1]\n**标题**: 采用分形进气歧管优化混合均匀度并抑制压力波动\n**描述**: 借鉴流动分配系统中的三维嵌套分形结构，重新设计发动机进气歧管。该歧管由多个递归Y形分叉单元组成，每级分叉相对于中心轴线旋转60–120度，使空气-燃料混合物在进入各气缸前实现高度均匀分布。此结构利用发明原理27（廉价替代品）和原理1（分割），将传统单一通道分割为多级自相似流道，提升混合效率的同时通过流道几何缓冲压力脉冲，减少燃烧不稳定性引发的噪音。由于仅重构现有进气通道，无需新增部件，直接利用发动机已有空间和燃料/空气资源，可降低油耗3–5%并显著减弱爆震噪声。\n**可行性**: 4/5 | 风险: low\n\n### 方案 2 [理想度: 0.72 | 问题匹配: 5/5 | 逻辑一致性: 4/5]\n**原理**: [12, 24]\n*",
+      "steps_log": [
+        "m1_modeling",
+        "m2_causal",
+        "m3_formulation",
+        "m4_solver",
+        "FOS",
+        "m5_generation",
+        "m6_evaluation"
+      ],
+      "agent_thoughts": [],
+      "mode": "orchestrator",
+      "expected": "success",
+      "description": "机械-简单"
+    }
+  ]
+}

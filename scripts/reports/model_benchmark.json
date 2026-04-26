@@ -1,0 +1,626 @@
+[
+  {
+    "test": "T1_JSON基础",
+    "model": "SDU-AI/DeepSeek-V4-Flash",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - async scheduling with spec decoding doesn't yet support penalties, bad words or structured outputs in sampling parameters.. Received Model Group=SDU-AI/DeepSeek-V4-Flash\\nAvailable Model Group Fallbacks=None\", 'type': None, 'param': None, 'code': '400'}}"
+  },
+  {
+    "test": "T2_JSON复杂",
+    "model": "SDU-AI/DeepSeek-V4-Flash",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - async scheduling with spec decoding doesn't yet support penalties, bad words or structured outputs in sampling parameters.. Received Model Group=SDU-AI/DeepSeek-V4-Flash\\nAvailable Model Group Fallbacks=None\", 'type': None, 'param': None, 'code': '400'}}"
+  },
+  {
+    "test": "T3_因果推理",
+    "model": "SDU-AI/DeepSeek-V4-Flash",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - async scheduling with spec decoding doesn't yet support penalties, bad words or structured outputs in sampling parameters.. Received Model Group=SDU-AI/DeepSeek-V4-Flash\\nAvailable Model Group Fallbacks=None\", 'type': None, 'param': None, 'code': '400'}}"
+  },
+  {
+    "test": "T4_简洁结构化",
+    "model": "SDU-AI/DeepSeek-V4-Flash",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - async scheduling with spec decoding doesn't yet support penalties, bad words or structured outputs in sampling parameters.. Received Model Group=SDU-AI/DeepSeek-V4-Flash\\nAvailable Model Group Fallbacks=None\", 'type': None, 'param': None, 'code': '400'}}"
+  },
+  {
+    "test": "T5_评分区分度",
+    "model": "SDU-AI/DeepSeek-V4-Flash",
+    "latency_s": 25.91,
+    "raw_output": "```json\n{\n  \"ranked_solutions\": [\n    {\n      \"title\": \"方案C：重新设计排气管路径，使气流远离驾驶舱\",\n      \"tags\": {\n        \"feasibility_score\": 4,\n        \"resource_fit_score\": 4,\n        \"innovation_score\": 3,\n        \"uniqueness_score\": 3,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 5,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"该方案直接针对噪音源（气流）进行空间分离，原理清晰且工程实现难度较低。不需要额外材料或复杂电子系统，仅需调整管道布局，资源匹配度高。风险低，因为不涉及新技术的引入，且对原系统改动小。创新性中等，但问题针对性强，逻辑一致性好。\"\n    },\n    {\n      \"title\": \"方案A：使用压电材料将振动转化为电能，同时降低噪音\",\n      \"tags\": {\n        \"feasibility_score\": 2,\n        \"resource_fit_score\": 2,\n        \"innovation_score\": 5,\n        \"uniqueness_score\": 5,\n        \"risk_level\": \"high\",\n        \"problem_relevance_score\": 3,\n        \"logical_consistency_score\": 3\n      },\n      \"evaluation_rationale\": \"该方案创新性极高，通过能量转换同时实现降噪和发电，具有独特的技术亮点。但可行性较低，压电材料的能量转换效率、耐久性、成本以及集成到发动机外壳的工程难度均较大。资源匹配度差，需要额外电源管理电路和材料投入。风险高，可能引入新的可靠性问题。问题相关性中等，因为振动能量转化对降噪的直接贡献有限。\"\n    },\n    {\n      \"title\": \"方案B：在发动机外壳加装隔音棉\",\n      \"tags\": {\n        \"feasibility_score\": 5,\n        \"resource_fit_score\": 5,\n        \"innovation_score\": 1,\n        \"uniqueness_score\": 1,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 4,\n        \"logical_consistency_score\": 4\n      },\n      \"evaluation_rationale\": \"该方案是最传统、最成熟的降噪手段，可行性极高，资源匹配度好（隔音棉易得且成本低），风险极低。但创新性和独特性极低，属于行业常规做法。问题相关性较好，但属于被动降噪，效果受限于隔音棉的吸声系数和安装工艺。逻辑一致，但缺乏技术突破。\"\n    }\n  ]\n}\n```",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "solution_count": 3,
+      "score_diversity": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T6_Agent决策",
+    "model": "SDU-AI/DeepSeek-V4-Flash",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - async scheduling with spec decoding doesn't yet support penalties, bad words or structured outputs in sampling parameters.. Received Model Group=SDU-AI/DeepSeek-V4-Flash\\nAvailable Model Group Fallbacks=None\", 'type': None, 'param': None, 'code': '400'}}"
+  },
+  {
+    "test": "T1_JSON基础",
+    "model": "SDU-AI/GLM-5",
+    "latency_s": 162.22,
+    "raw_output": "{  \n  \"sao_list\": [  \n    {\"subject\":\"汽车发动机\",\"action\":\"运转\",\"object\":\"汽车\",\"function_type\":\"useful\"},  \n    {\"subject\":\"汽车发动机\",\"action\":\"产生\",\"object\":\"噪音\",\"function_type\":\"harmful\"},  \n    {\"subject\":\"噪音\",\"action\":\"影响\",\"object\":\"驾驶舒适性\",\"function_type\":\"harmful\"}  \n  ],  \n  \"resources\": {  \n    \"material\":[\"汽车发动机\",\"汽车\",\"噪音\"],  \n    \"energy\":[\"机械能\",\"声能\"],  \n    \"information\":[],  \n    \"space\":[],  \n    \"time\":[\"高速运转时\"],  \n    \"function\":[\"运转\",\"产生\",\"影响\"]  \n  },  \n  \"ifr\": \"汽车发动机在高速运转时不产生噪音，同时保持正常运转功能，不影响驾驶舒适性。\"  \n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "sao_count": 3,
+      "type_validity": 5,
+      "resource_completeness": 5,
+      "ifr_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T2_JSON复杂",
+    "model": "SDU-AI/GLM-5",
+    "latency_s": 42.62,
+    "raw_output": "{\n  \"solution_drafts\": [\n    {\n      \"title\": \"自适应变几何散热通道系统\",\n      \"description\": \"该方案应用发明原理15（动态化）和35（参数变化），设计一种可根据发动机实时热负荷动态调整几何形状的散热通道。通道壁面采用形状记忆合金或压电陶瓷材料，当温度升高时，通道截面自动扩大，增加散热面积和空气流量，从而显著提高散热效率。当温度降低或处于低负荷工况时，通道截面收缩，维持气流速度以防止散热过度，同时因气流速度可控，避免了高速气流产生的啸叫噪音。该系统无需引入额外的高噪音主动散热设备，而是通过结构自身的动态形变实现散热能力的按需分配，从根本上解决了散热效率与噪音抑制之间的矛盾。\",\n      \"applied_principles\": [15, 35],\n      \"resource_mapping\": \"利用发动机自身的热能作为驱动源自适应变形的资源，无需外部能源；利用现有散热通道的空间结构进行参数化改造，将固定结构变为可变几何结构。\"\n    },\n    {\n      \"title\": \"声学超材料静音散热组件\",\n      \"description\": \"该方案应用发明原理28（机械系统替代）和35（参数变化），引入声学超材料技术替代传统金属散热翅片结构。设计一种具有特定周期性微孔结构的复合材料散热器，该结构在流体动力学上能有效增强湍流换热，提高散热效率（参数变化），而在声学特性上则形成声子带隙，能够阻断特定频率声波的传播，从而从物理原理上抑制噪音辐射。通过使用这种功能性材料替代单纯的机械阻隔结构，系统在提升热交换性能的同时，利用材料本身的波动物理特性实现了静音功能，将“机械系统”的散热与隔音功能解耦并重新耦合为高性能低噪音的整体。\",\n      \"applied_principles\": [28, 35],\n      \"resource_mapping\": \"利用材料科学领域的先进成果（声学超材料）替代现有机械结构资源；利用空气对流作為散热介质，通过改变材料微观参数（孔径、排列周期）来调控流体与声波的传播特性。\"\n    }\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "draft_count": 2,
+      "desc_length": 5,
+      "principles_cited": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T3_因果推理",
+    "model": "SDU-AI/GLM-5",
+    "latency_s": 16.0,
+    "raw_output": "{\n  \"root_param\": \"冷却液沸点\",\n  \"causal_chain\": [\n    \"发动机冷却液在高温工况下性能下降，导致散热不足 → 为什么？ → 冷却液在高温下发生相变（沸腾）或热衰退，降低了传热效率。\",\n    \"冷却液在高温下发生相变或热衰退 → 为什么？ → 冷却液的饱和蒸汽压随温度升高急剧增大，接近或超过系统压力，导致沸点降低。\",\n    \"冷却液的饱和蒸汽压随温度升高急剧增大 → 为什么？ → 冷却液配方中水的比例过高或添加剂不足，导致混合液的整体沸点物理上限较低。\"\n  ],\n  \"candidate_attributes\": [\n    \"沸点\",\n    \"冰点\",\n    \"pH值\",\n    \"气泡分离特性\"\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "chain_depth": 3,
+      "attributes_count": 4,
+      "root_param_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T4_简洁结构化",
+    "model": "SDU-AI/GLM-5",
+    "latency_s": 3.73,
+    "raw_output": "{\n  \"problem_type\": \"phys\",\n  \"improve_desc\": \"流动性好\",\n  \"worsen_desc\": \"密封性差\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "problem_type_valid": 5,
+      "improve_length": 5,
+      "worsen_length": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T5_评分区分度",
+    "model": "SDU-AI/GLM-5",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Request timed out."
+  },
+  {
+    "test": "T6_Agent决策",
+    "model": "SDU-AI/GLM-5",
+    "latency_s": 27.52,
+    "raw_output": "{\"thought\": \"根据TRIZ解题流程，在完成功能建模(m1)和因果分析(m2)后，需要将问题转化为标准矛盾模型才能进行方案生成。当前缺少矛盾定义(m3)，这是连接问题分析与方案生成的关键桥梁。\", \"action\": \"m3_formulation\"}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "has_thought": 5,
+      "valid_action": 5,
+      "correct_action": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T1_JSON基础",
+    "model": "SDU-AI/Qwen3-235B-A22B-Instruct-2507",
+    "latency_s": 60.4,
+    "raw_output": "{\n  \"sao_list\": [\n    {\n      \"subject\": \"发动机\",\n      \"action\": \"产生振动\",\n      \"object\": \"发动机本体结构\",\n      \"function_type\": \"harmful\"\n    },\n    {\n      \"subject\": \"发动机振动\",\n      \"action\": \"传递\",\n      \"object\": \"车身结构\",\n      \"function_type\": \"harmful\"\n    },\n    {\n      \"subject\": \"发动机高速运转\",\n      \"action\": \"产生噪音\",\n      \"object\": \"周围空气\",\n      \"function_type\": \"harmful\"\n    },\n    {\n      \"subject\": \"空气\",\n      \"action\": \"传播噪音\",\n      \"object\": \"驾驶室内部空间\",\n      \"function_type\": \"harmful\"\n    },\n    {\n      \"subject\": \"隔音材料\",\n      \"action\": \"吸收噪音\",\n      \"object\": \"噪音声波\",\n      \"function_type\": \"useful\"\n    },\n    {\n      \"subject\": \"发动机支架\",\n      \"action\": \"隔离振动\",\n      \"object\": \"车身\",\n      \"function_type\": \"useful\"\n    },\n    {\n      \"subject\": \"发动机内部运动部件\",\n      \"action\": \"摩擦\",\n      \"object\": \"发动机缸体\",\n      \"function_type\": \"harmful\"\n    },\n    {\n      \"subject\": \"冷却系统\",\n      \"action\": \"散热\",\n      \"object\": \"发动机热量\",\n      \"function_type\": \"useful\"\n    }\n  ],\n  \"resources\": {\n    \"material\": [\n      \"发动机金属结构\",\n      \"发动机润滑油\",\n      \"隔音材料（如泡沫、隔音垫）\",\n      \"发动机支架（橡胶或液压）\",\n      \"冷却液\"\n    ],\n    \"energy\": [\n      \"发动机机械能\",\n      \"热能（发动机发热）\",\n      \"声能（噪音）\",\n      \"振动动能\"\n    ],\n    \"information\": [\n      \"发动机转速信号\",\n      \"噪音频率数据\",\n      \"振动频率检测信息\",\n      \"温度传感器数据\"\n    ],\n    \"space\": [\n      \"发动机舱内部空间\",\n      \"发动机与车身之间的间隙\",\n      \"驾驶室与发动机舱之间的隔断区域\"\n    ],\n    \"time\": [\n      \"发动机高速运行时段\",\n      \"车辆启动至怠速过渡时间\",\n      \"噪音产生的时间持续性\"\n    ],\n    \"function\": [\n      \"减振\",\n      \"隔音\",\n      \"降噪\",\n      \"散热\",\n      \"密封\"\n    ]\n  },\n  \"ifr\": \"发动机在高速运转时自身不产生噪音，且无需额外隔音或减振装置，驾驶室完全无噪音干扰，同时保持发动机性能和散热效率不变。\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "sao_count": 5,
+      "type_validity": 5,
+      "resource_completeness": 5,
+      "ifr_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T2_JSON复杂",
+    "model": "SDU-AI/Qwen3-235B-A22B-Instruct-2507",
+    "latency_s": 57.99,
+    "raw_output": "{\n  \"solution_drafts\": [\n    {\n      \"title\": \"基于动态调节的可变几何散热通道系统\",\n      \"description\": \"本方案提出一种采用可变几何形状的发动机散热通道系统，通过引入动态化（原理15）与参数变化（原理35）实现散热效率的智能调节。系统内置温度感应模块与微型执行机构，实时监测发动机热负荷，并根据工况动态调整散热通道的截面积与流向路径。在高热负载时，通道自动扩张并延长流道以增强空气与散热面的接触时间；在低负载时则收缩以减少风阻与气流扰动，从而避免因强制通风带来的额外噪音。该设计充分利用发动机原有冷却气流与空间布局，无需额外增加风扇功率或转速，有效在不恶化噪音水平的前提下提升散热性能。结构可集成于现有散热模块中，具备良好的可制造性与兼容性。\",\n      \"applied_principles\": [15, 35],\n      \"resource_mapping\": \"利用发动机运行时产生的热能变化作为反馈信号，驱动可变结构的执行机构；同时利用原有冷却气流和散热器周边空间作为系统运作的物理资源，无需新增外部能源或复杂组件。\"\n    },\n    {\n      \"title\": \"基于磁流体动力的无机械运动散热调控系统\",\n      \"description\": \"本方案采用机械系统替代（原理28）与参数变化（原理35）思想，提出一种基于磁流体（ferrofluid）的智能散热调控系统。在发动机散热通道内引入受控磁流体层，通过调节电磁场强度动态改变流体的分布形态与热导率，从而实时调控散热路径与效率。当发动机温度升高时，控制系统增强磁场，使磁流体在关键热区形成高效导热桥接结构；温度降低时则减弱磁场，使流体回流至储存区，减少流动阻力与振动噪声。该系统无传统风扇或活动部件，从根本上消除机械噪音源，同时实现精准的热管理。系统利用发动机电控单元供电与传感器数据，实现闭环智能控制，适用于高静音要求的电动或混合动力平台。\",\n      \"applied_principles\": [35, 28],\n      \"resource_mapping\": \"利用发动机电控系统现有的电力供应与温度传感资源，驱动电磁模块；磁流体材料可密封循环使用，依托原有散热结构进行集成，不增加额外空间或运动部件，提升系统可靠性与维护性。\"\n    }\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "draft_count": 2,
+      "desc_length": 5,
+      "principles_cited": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T3_因果推理",
+    "model": "SDU-AI/Qwen3-235B-A22B-Instruct-2507",
+    "latency_s": 15.63,
+    "raw_output": "{\n  \"root_param\": \"冷却液比热容\",\n  \"causal_chain\": [\n    \"为什么散热不足？→ 冷却液在高温工况下吸热能力下降，导致无法有效带走发动机热量\",\n    \"为什么冷却液吸热能力下降？→ 冷却液比热容随温度升高而降低，单位质量液体升温所需热量减少\",\n    \"为什么比热容降低导致性能下降？→ 比热容是冷却液储存热能的关键物理参数，其下降使液体温升加快，超出散热系统设计裕度\"\n  ],\n  \"candidate_attributes\": [\n    \"比热容\",\n    \"热导率\"\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "chain_depth": 3,
+      "attributes_count": 2,
+      "root_param_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T4_简洁结构化",
+    "model": "SDU-AI/Qwen3-235B-A22B-Instruct-2507",
+    "latency_s": 3.94,
+    "raw_output": "{\n  \"problem_type\": \"phys\",\n  \"improve_desc\": \"流动性\",\n  \"worsen_desc\": \"密封性\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "problem_type_valid": 5,
+      "improve_length": 5,
+      "worsen_length": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T5_评分区分度",
+    "model": "SDU-AI/Qwen3-235B-A22B-Instruct-2507",
+    "latency_s": 75.85,
+    "raw_output": "```json\n{\n  \"ranked_solutions\": [\n    {\n      \"title\": \"方案A：使用压电材料将振动转化为电能，同时降低噪音\",\n      \"tags\": {\n        \"feasibility_score\": 3,\n        \"resource_fit_score\": 3,\n        \"innovation_score\": 5,\n        \"uniqueness_score\": 5,\n        \"risk_level\": \"medium\",\n        \"problem_relevance_score\": 4,\n        \"logical_consistency_score\": 4\n      },\n      \"evaluation_rationale\": \"该方案利用压电材料实现振动到电能的转换，兼具能量回收与降噪功能，体现了TRIZ中的能量转换原理，创新性和独特性突出。技术可行性中等，因压电材料在高振幅、高温环境（如发动机附近）的耐久性和转换效率仍存在工程挑战。资源适配性中等，需额外电路系统收集和储存电能。风险为中等，主要来自材料老化和系统集成复杂性。方案逻辑自洽，对振动和噪音问题有直接响应，相关性高。\"\n    },\n    {\n      \"title\": \"方案C：重新设计排气管路径，使气流远离驾驶舱\",\n      \"tags\": {\n        \"feasibility_score\": 4,\n        \"resource_fit_score\": 4,\n        \"innovation_score\": 3,\n        \"uniqueness_score\": 3,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 5,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"该方案应用空间分离原理，通过改变排气路径减少热气流和噪音对驾驶舱的影响，技术成熟、实施难度低，可行性与资源适配性高。虽创新性一般，但针对性强，逻辑严密，能有效缓解核心问题。风险低，仅需结构重新布局，不引入新部件或材料。问题相关性和一致性均为最高，是可靠且高效的工程解决方案。\"\n    },\n    {\n      \"title\": \"方案B：在发动机外壳加装隔音棉\",\n      \"tags\": {\n        \"feasibility_score\": 5,\n        \"resource_fit_score\": 5,\n        \"innovation_score\": 2,\n        \"uniqueness_score\": 1,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 3,\n        \"logical_consistency_score\": 3\n      },\n      \"evaluation_rationale\": \"隔音棉是传统降噪手段，实施简单、成本低，可行性与资源匹配度最高。但创新性和独特性极低，属于常规改进，未体现系统级创新思维。仅能部分缓解噪音，对振动能量未做处理，问题相关性中等。逻辑一致性一般，虽符合隔离原理，但属于末端治理，治标不治本。适合作为辅助措施，而非主导解决方案。\"\n    }\n  ]\n}\n```",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "solution_count": 3,
+      "score_diversity": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T6_Agent决策",
+    "model": "SDU-AI/Qwen3-235B-A22B-Instruct-2507",
+    "latency_s": 6.36,
+    "raw_output": "{\"thought\": \"已完成功能建模和因果分析，下一步应定义核心矛盾，将问题转化为标准TRIZ技术或物理矛盾，为后续方案生成做准备。\", \"action\": \"m3_formulation\"}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "has_thought": 5,
+      "valid_action": 5,
+      "correct_action": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T1_JSON基础",
+    "model": "Ali-dashscope/DeepSeek-V3.2",
+    "latency_s": 11.79,
+    "raw_output": "{\n  \"sao_list\": [\n    {\"subject\": \"发动机\", \"action\": \"产生\", \"object\": \"噪音\", \"function_type\": \"harmful\"},\n    {\"subject\": \"发动机\", \"action\": \"运转\", \"object\": \"汽车\", \"function_type\": \"useful\"},\n    {\"subject\": \"噪音\", \"action\": \"影响\", \"object\": \"驾驶舒适性\", \"function_type\": \"harmful\"},\n    {\"subject\": \"发动机\", \"action\": \"消耗\", \"object\": \"燃料\", \"function_type\": \"useful\"},\n    {\"subject\": \"发动机\", \"action\": \"产生\", \"object\": \"振动\", \"function_type\": \"harmful\"},\n    {\"subject\": \"振动\", \"action\": \"传递\", \"object\": \"噪音\", \"function_type\": \"harmful\"},\n    {\"subject\": \"高速运转\", \"action\": \"加剧\", \"object\": \"噪音\", \"function_type\": \"harmful\"}\n  ],\n  \"resources\": {\n    \"material\": [\"发动机部件\", \"空气\", \"燃料\", \"汽车结构\"],\n    \"energy\": [\"热能\", \"机械能\", \"声能\"],\n    \"information\": [\"转速信号\", \"噪音频率\"],\n    \"space\": [\"发动机舱\", \"驾驶室\"],\n    \"time\": [\"高速运转时段\"],\n    \"function\": [\"隔音材料吸音\", \"减震器缓冲\"]\n  },\n  \"ifr\": \"发动机在高速运转时，自身不产生任何有害噪音，同时保持高效的动力输出，确保驾驶舒适性不受影响。\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "sao_count": 5,
+      "type_validity": 5,
+      "resource_completeness": 5,
+      "ifr_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T2_JSON复杂",
+    "model": "Ali-dashscope/DeepSeek-V3.2",
+    "latency_s": 21.7,
+    "raw_output": "{\n  \"solution_drafts\": [\n    {\n      \"title\": \"基于动态可变几何形状的智能散热通道系统\",\n      \"description\": \"本方案应用TRIZ发明原理15（动态化）和35（参数变化），通过引入可变几何形状的散热通道来动态调节发动机的散热效率。系统设计包括可伸缩或可旋转的导流叶片，这些叶片安装在发动机散热通道的关键位置，能够根据发动机的实时温度和工作负荷，通过执行器自动调整开合角度或位置。当发动机处于高负荷状态、需要增强散热时，叶片展开以增大气流通道截面积，促进更多冷却空气通过，从而提高散热效率；在低负荷或怠速状态下，叶片部分闭合，减少气流通道，从而有效降低因高速气流产生的风噪。同时，系统集成温度与噪音传感器，实现闭环控制，确保在提升散热的同时，将噪音维持在预设阈值以下。该设计灵感来源于专利US20200123456，但进一步强化了动态自适应能力，实现了散热与噪音之间的优化平衡。\",\n      \"applied_principles\": [15, 35],\n      \"resource_mapping\": \"利用发动机现有的散热通道结构作为基础，整合可用的空间安装动态叶片；使用发动机控制单元（ECU）的实时数据（如温度、转速）作为控制输入；将车辆电能系统作为执行器（如微型电机或电磁驱动器）的能源；利用气流本身作为冷却介质和调节对象，无需额外冷却剂。\"\n    },\n    {\n      \"title\": \"采用相变材料与主动气流调控的复合散热机制\",\n      \"description\": \"本方案应用TRIZ发明原理28（机械系统替代）和35（参数变化），通过用非机械的相变材料（PCM）部分替代传统的纯机械散热系统，并结合主动气流调控来提升散热效率并抑制噪音。具体而言，在发动机关键热源部位（如缸盖或排气歧管附近）集成封装相变材料模块，这些材料在特定温度下发生相变（如从固态到液态），吸收大量热量，从而缓冲热峰值，减少对强制气流的持续高需求。同时，散热通道采用参数可变的主动气流系统，如配备多速风扇或可调频压电式气流发生器，其运行参数（如转速或频率）根据相变材料的热状态和发动机温度进行精细调节。当相变材料吸热饱和时，系统启动高效但低速的冷却模式，以较低气流速度实现散热，显著降低噪音；在极端情况下，才启用高速模式。这种复合机制替代了单一依赖高速机械风扇的传统方式，实现了更平稳、低噪的热管理。\",\n      \"applied_principles\": [28, 35],\n      \"resource_mapping\": \"利用发动机舱内的空闲空间部署相变材料模块；使用发动机废热作为触发相变材料活化的资源；整合现有的电子控制单元和温度传感器网络来监控热状态；将车辆电气系统作为主动气流调控装置（如变频风扇）的电源；利用环境空气作为冷却介质，通过调节其流动参数优化散热与噪音。\"\n    }\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "draft_count": 2,
+      "desc_length": 5,
+      "principles_cited": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T3_因果推理",
+    "model": "Ali-dashscope/DeepSeek-V3.2",
+    "latency_s": 5.88,
+    "raw_output": "{\n  \"root_param\": \"冷却液沸点\",\n  \"causal_chain\": [\n    \"第1层为什么→冷却液在高温工况下性能下降，是因为冷却液沸点降低，导致沸腾产生气阻，阻碍流动传热\",\n    \"第2层为什么→冷却液沸点降低，是因为冷却液组分（如乙二醇/水比例）不当或添加剂失效，降低了其热稳定性\",\n    \"第3层为什么→冷却液组分不当或添加剂失效，是因为长期高温运行或维护不当（如未定期更换），导致冷却液化学性质退化\"\n  ],\n  \"candidate_attributes\": [\"比热容\", \"导热系数\"]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "chain_depth": 3,
+      "attributes_count": 2,
+      "root_param_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T4_简洁结构化",
+    "model": "Ali-dashscope/DeepSeek-V3.2",
+    "latency_s": 1.67,
+    "raw_output": "{\n  \"problem_type\": \"phys\",\n  \"improve_desc\": \"流动性\",\n  \"worsen_desc\": \"密封性\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "problem_type_valid": 5,
+      "improve_length": 5,
+      "worsen_length": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T5_评分区分度",
+    "model": "Ali-dashscope/DeepSeek-V3.2",
+    "latency_s": 17.73,
+    "raw_output": "```json\n{\n  \"ranked_solutions\": [\n    {\n      \"title\": \"方案A：使用压电材料将振动转化为电能，同时降低噪音\",\n      \"tags\": {\n        \"feasibility_score\": 3,\n        \"resource_fit_score\": 2,\n        \"innovation_score\": 5,\n        \"uniqueness_score\": 5,\n        \"risk_level\": \"medium\",\n        \"problem_relevance_score\": 4,\n        \"logical_consistency_score\": 4\n      },\n      \"evaluation_rationale\": \"该方案具有较高的创新性和独特性，将振动能量转化为电能，实现一石二鸟的效果。但技术实现复杂，成本较高，对现有系统改动较大，资源匹配度较低，且压电材料在实际车辆振动环境下的长期可靠性和能量转换效率存在不确定性。\"\n    },\n    {\n      \"title\": \"方案C：重新设计排气管路径，使气流远离驾驶舱\",\n      \"tags\": {\n        \"feasibility_score\": 4,\n        \"resource_fit_score\": 3,\n        \"innovation_score\": 3,\n        \"uniqueness_score\": 3,\n        \"risk_level\": \"medium\",\n        \"problem_relevance_score\": 5,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"该方案逻辑一致性高，直接针对噪音源（气流路径）进行空间分离，问题相关性最强。技术相对成熟，但需要对车辆底盘布局进行重新设计，可能涉及其他系统（如热管理、结构强度）的调整，实施成本和工程复杂度中等，创新性一般。\"\n    },\n    {\n      \"title\": \"方案B：在发动机外壳加装隔音棉\",\n      \"tags\": {\n        \"feasibility_score\": 5,\n        \"resource_fit_score\": 5,\n        \"innovation_score\": 1,\n        \"uniqueness_score\": 1,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 4,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"该方案可行性最高，资源匹配度最好（成本低、技术简单、易于实施），风险最低，逻辑清晰（通过隔离降低噪音）。但创新性和独特性极低，属于行业常规做法，可能无法解决所有频段的噪音，且对发动机散热可能产生轻微影响。\"\n    }\n  ]\n}\n```",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "solution_count": 3,
+      "score_diversity": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T6_Agent决策",
+    "model": "Ali-dashscope/DeepSeek-V3.2",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - <400> InternalError.Algo.InvalidParameter: 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.. Received Model Group=Ali-dashscope/DeepSeek-V3.2\\nAvailable Model Group Fallbacks=None\", 'type': 'invalid_request_error', 'param': None, 'code': '400'}}"
+  },
+  {
+    "test": "T1_JSON基础",
+    "model": "Ali-dashscope/Kimi-K2.5",
+    "latency_s": 10.56,
+    "raw_output": "{\n  \"sao_list\": [\n    {\"subject\":\"发动机\",\"action\":\"运转\",\"object\":\"机械能\",\"function_type\":\"useful\"},\n    {\"subject\":\"发动机\",\"action\":\"产生\",\"object\":\"噪音\",\"function_type\":\"harmful\"},\n    {\"subject\":\"噪音\",\"action\":\"影响\",\"object\":\"驾驶舒适性\",\"function_type\":\"harmful\"},\n    {\"subject\":\"发动机\",\"action\":\"产生\",\"object\":\"振动\",\"function_type\":\"harmful\"},\n    {\"subject\":\"振动\",\"action\":\"传递\",\"object\":\"车身结构\",\"function_type\":\"harmful\"},\n    {\"subject\":\"车身结构\",\"action\":\"放大\",\"object\":\"噪音\",\"function_type\":\"excessive\"},\n    {\"subject\":\"隔音材料\",\"action\":\"吸收\",\"object\":\"噪音\",\"function_type\":\"insufficient\"},\n    {\"subject\":\"排气系统\",\"action\":\"排放\",\"object\":\"废气\",\"function_type\":\"useful\"},\n    {\"subject\":\"排气系统\",\"action\":\"产生\",\"object\":\"排气噪音\",\"function_type\":\"harmful\"},\n    {\"subject\":\"燃烧过程\",\"action\":\"释放\",\"object\":\"能量\",\"function_type\":\"useful\"},\n    {\"subject\":\"燃烧过程\",\"action\":\"产生\",\"object\":\"压力波\",\"function_type\":\"harmful\"}\n  ],\n  \"resources\": {\n    \"material\":[\"发动机金属部件\",\"隔音棉\",\"橡胶垫\",\"空气\",\"机油\",\"冷却液\"],\n    \"energy\":[\"机械能\",\"热能\",\"声能\",\"振动能\"],\n    \"information\":[\"转速信号\",\"振动频率\",\"噪音分贝值\",\"燃烧状态\"],\n    \"space\":[\"发动机舱\",\"乘员舱\",\"底盘下方\",\"排气通道\"],\n    \"time\":[\"怠速阶段\",\"加速阶段\",\"高速巡航阶段\",\"冷启动阶段\"],\n    \"function\":[\"能量转换\",\"振动隔离\",\"声波吸收\",\"频率调节\"]\n  },\n  \"ifr\": \"发动机在高速运转时，能量转换过程本身不产生任何有害振动和噪音，驾驶舒适性自动保持在最优状态，无需额外隔音材料和降噪装置\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "sao_count": 5,
+      "type_validity": 5,
+      "resource_completeness": 5,
+      "ifr_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T2_JSON复杂",
+    "model": "Ali-dashscope/Kimi-K2.5",
+    "latency_s": 0.9,
+    "raw_output": "{\"solution_drafts\":\":[{\"}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {},
+    "error": "'str' object has no attribute 'get'"
+  },
+  {
+    "test": "T3_因果推理",
+    "model": "Ali-dashscope/Kimi-K2.5",
+    "latency_s": 0.78,
+    "raw_output": "{\"root_param\":\",\"}",
+    "json_valid": true,
+    "schema_match": false,
+    "scores": {
+      "chain_depth": 0,
+      "attributes_count": 0,
+      "root_param_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T4_简洁结构化",
+    "model": "Ali-dashscope/Kimi-K2.5",
+    "latency_s": 1.49,
+    "raw_output": "{\n  \"problem_type\": \"phys\",\n  \"improve_desc\": \"流动性好\",\n  \"worsen_desc\": \"密封性差\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "problem_type_valid": 5,
+      "improve_length": 5,
+      "worsen_length": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T5_评分区分度",
+    "model": "Ali-dashscope/Kimi-K2.5",
+    "latency_s": 13.24,
+    "raw_output": "```json\n{\n  \"ranked_solutions\": [\n    {\n      \"title\": \"方案C：重新设计排气管路径，使气流远离驾驶舱\",\n      \"tags\": {\n        \"feasibility_score\": 4,\n        \"resource_fit_score\": 4,\n        \"innovation_score\": 3,\n        \"uniqueness_score\": 2,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 5,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"该方案直接针对噪音源头（气流）进行空间重构，治本而非治标。排气管路径设计是成熟技术，实施风险低、成本可控，且不影响发动机性能。虽然创新性一般（传统工程方法），但逻辑严密、问题相关性最高，综合性价比最优。\"\n    },\n    {\n      \"title\": \"方案A：使用压电材料将振动转化为电能，同时降低噪音\",\n      \"tags\": {\n        \"feasibility_score\": 2,\n        \"resource_fit_score\": 2,\n        \"innovation_score\": 5,\n        \"uniqueness_score\": 5,\n        \"risk_level\": \"high\",\n        \"problem_relevance_score\": 4,\n        \"logical_consistency_score\": 4\n      },\n      \"evaluation_rationale\": \"能量转换原理具有高度创新性，实现振动-电能双赢，符合绿色发展趋势。但压电材料在汽车发动机高温、高振动环境下的耐久性、能量转化效率及成本控制均为未成熟技术，当前工程化可行性较低。属于前瞻性方案，适合长期技术储备而非即时落地。\"\n    },\n    {\n      \"title\": \"方案B：在发动机外壳加装隔音棉\",\n      \"tags\": {\n        \"feasibility_score\": 5,\n        \"resource_fit_score\": 5,\n        \"innovation_score\": 1,\n        \"uniqueness_score\": 1,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 2,\n        \"logical_consistency_score\": 3\n      },\n      \"evaluation_rationale\": \"方案实施最简单、成本最低，但属于被动隔离的常规手段，创新性几乎为零。隔音棉增加重量可能影响燃油经济性，且对低频结构噪声抑制有限，未能从源头解决问题，属于'掩盖症状'而非'消除病因'，长期竞争力弱。\"\n    }\n  ]\n}\n```",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "solution_count": 3,
+      "score_diversity": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T6_Agent决策",
+    "model": "Ali-dashscope/Kimi-K2.5",
+    "latency_s": 4.13,
+    "raw_output": "{\"thought\":\"\n当前状态分析：\n- 已完成m1_modeling（功能建模）和m2_causal（因果分析）\n- 未完成m3_formulation（矛盾定义）、m5_generation（方案生成）、m6_evaluation（方案评估）\n\nTRIZ方法论的标准流程是：m1 → m2 → m3 → m5 → m6\n\n因果分析（m2）完成后，下一步需要将问题转化为TRIZ可处理的形式——即定义技术矛盾或物理矛盾。这是m3_formulation的核心任务。\n\n对于\\\"手机电池续航不足\\\"问题，经过因果链分析后，应该已经识别出关键冲突因素（如：电池容量 vs 手机厚度/重量，或功耗 vs 性能等）。现在需要将这些冲突明确表述为矛盾形式，为后续方案生成奠定基础。\n\n因此，下一步应执行m3_formulation。\n\",\"action\":\"m3_formulation\"}",
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": null
+  },
+  {
+    "test": "T1_JSON基础",
+    "model": "Ali-dashscope/Qwen3.5-Plus",
+    "latency_s": 11.53,
+    "raw_output": "{\n  \"sao_list\": [\n    {\n      \"subject\": \"发动机\",\n      \"action\": \"产生\",\n      \"object\": \"噪音\",\n      \"function_type\": \"harmful\"\n    },\n    {\n      \"subject\": \"噪音\",\n      \"action\": \"影响\",\n      \"object\": \"驾驶舒适性\",\n      \"function_type\": \"harmful\"\n    }\n  ],\n  \"resources\": {\n    \"material\": [\"发动机金属部件\", \"隔音材料\", \"排气系统组件\"],\n    \"energy\": [\"机械振动能\", \"热能\", \"声能\"],\n    \"information\": [\"噪音频率数据\", \"振动模式参数\"],\n    \"space\": [\"发动机舱空间\", \"车身结构间隙\"],\n    \"time\": [\"高速运转时段\", \"噪音传播时间\"],\n    \"function\": [\"现有消声器功能\", \"车身隔音设计\"]\n  },\n  \"ifr\": \"发动机在高速运转时不产生有害噪音，同时保持动力输出效率，无需额外增加复杂结构或成本\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "sao_count": 2,
+      "type_validity": 5,
+      "resource_completeness": 5,
+      "ifr_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T2_JSON复杂",
+    "model": "Ali-dashscope/Qwen3.5-Plus",
+    "latency_s": 15.28,
+    "raw_output": "{\n  \"solution_drafts\": [\n    {\n      \"title\": \"动态可调式散热通道系统\",\n      \"description\": \"基于专利US20200123456的可变几何结构，设计具有形状记忆合金的散热通道内壁。当发动机温度升高时，合金受热变形自动扩大通道截面积（应用原理15动态化），增强冷却液流速；低温时收缩通道减少湍流噪音。通过实时监测冷却液温度参数（应用原理35参数变化），动态调整通道曲率半径，在散热效率提升20%的同时保持噪音水平低于65分贝。\",\n      \"applied_principles\": [15, 35],\n      \"resource_mapping\": \"利用发动机现有温度传感器信号控制合金相变，复用冷却液循环系统作为驱动介质\"\n    },\n    {\n      \"title\": \"磁流体复合散热装置\",\n      \"description\": \"采用原理28机械系统替代，用磁流体取代传统机械风扇。在散热鳍片间注入纳米磁性颗粒悬浮液，通过电磁线圈产生交变磁场驱动流体运动（应用原理15动态化）。根据负载需求调节磁场频率（应用原理35参数变化），实现无机械振动的强制对流散热。实验表明该方案可使热交换效率提升35%，且运行噪音较传统风扇降低18分贝。\",\n      \"applied_principles\": [28, 35],\n      \"resource_mapping\": \"利用发动机供电系统驱动电磁线圈，回收排气余热维持磁流体工作温度区间\"\n    }\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "draft_count": 2,
+      "desc_length": 5,
+      "principles_cited": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T3_因果推理",
+    "model": "Ali-dashscope/Qwen3.5-Plus",
+    "latency_s": 51.89,
+    "raw_output": "{\n  \"root_param\": \"冷却液沸点\",\n  \"causal_chain\": [\n    \"第 1 层为什么→散热不足是因为冷却液在高温工况下有效传热系数显著降低\",\n    \"第 2 层为什么→传热系数降低是因为冷却液接触高温壁面时发生局部沸腾形成蒸汽隔热层\",\n    \"第 3 层为什么→发生局部沸腾是因为冷却液的额定沸点低于发动机局部热点的实际温度\"\n  ],\n  \"candidate_attributes\": [\n    \"沸点\",\n    \"饱和蒸气压\",\n    \"比热容\"\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "chain_depth": 3,
+      "attributes_count": 3,
+      "root_param_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T4_简洁结构化",
+    "model": "Ali-dashscope/Qwen3.5-Plus",
+    "latency_s": 165.16,
+    "raw_output": "{\n  \"problem_type\": \"phys\",\n  \"improve_desc\": \"流动性\",\n  \"worsen_desc\": \"密封性\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "problem_type_valid": 5,
+      "improve_length": 5,
+      "worsen_length": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T5_评分区分度",
+    "model": "Ali-dashscope/Qwen3.5-Plus",
+    "latency_s": 74.91,
+    "raw_output": "{\n  \"ranked_solutions\": [\n    {\n      \"title\": \"排气管路径空间分离方案\",\n      \"tags\": {\n        \"feasibility_score\": 4,\n        \"resource_fit_score\": 3,\n        \"innovation_score\": 3,\n        \"uniqueness_score\": 3,\n        \"risk_level\": \"medium\",\n        \"problem_relevance_score\": 5,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"该方案基于空间分离原理，从传播路径上切断噪音源与接收者的联系，逻辑严密且无需引入新材料。虽然需要重新设计布局，存在中等工程风险，但问题解决针对性强，整体性价比和可靠性优于传统隔音方案，符合理想最终结果导向。\"\n    },\n    {\n      \"title\": \"压电振动能量回收降噪方案\",\n      \"tags\": {\n        \"feasibility_score\": 3,\n        \"resource_fit_score\": 2,\n        \"innovation_score\": 5,\n        \"uniqueness_score\": 5,\n        \"risk_level\": \"high\",\n        \"problem_relevance_score\": 4,\n        \"logical_consistency_score\": 4\n      },\n      \"evaluation_rationale\": \"应用能量转换原理，兼具降噪与能量回收功能，创新性和独特性极高。但压电材料在发动机高温高振环境下的耐久性和转换效率存在技术瓶颈，资源匹配度低，实施风险高，适合作为长期技术储备而非短期落地方案。\"\n    },\n    {\n      \"title\": \"发动机外壳隔音棉隔离方案\",\n      \"tags\": {\n        \"feasibility_score\": 5,\n        \"resource_fit_score\": 5,\n        \"innovation_score\": 1,\n        \"uniqueness_score\": 1,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 3,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"典型的物理隔离手段，技术成熟度极高，实施可行性最好，风险最低。但属于治标不治本的被动防御，未消除振动源，且增加重量和空间占用，创新性和独特性最低，符合传统工程惯例但缺乏 TRIZ 突破性。\"\n    }\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "solution_count": 3,
+      "score_diversity": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T6_Agent决策",
+    "model": "Ali-dashscope/Qwen3.5-Plus",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - <400> InternalError.Algo.InvalidParameter: 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.. Received Model Group=Ali-dashscope/Qwen3.5-Plus\\nAvailable Model Group Fallbacks=None\", 'type': 'invalid_request_error', 'param': None, 'code': '400'}}"
+  },
+  {
+    "test": "T1_JSON基础",
+    "model": "Ali-dashscope/Qwen3.6-Plus",
+    "latency_s": 15.15,
+    "raw_output": "{\n  \"sao_list\": [\n    {\"subject\": \"发动机\", \"action\": \"产生\", \"object\": \"噪音\", \"function_type\": \"harmful\"},\n    {\"subject\": \"发动机\", \"action\": \"提供\", \"object\": \"动力\", \"function_type\": \"useful\"}\n  ],\n  \"resources\": {\n    \"material\": [\"发动机金属部件\", \"隔音材料\", \"排气系统\"],\n    \"energy\": [\"机械振动能\", \"声能\", \"热能\"],\n    \"information\": [\"噪音频率数据\", \"转速传感器信号\"],\n    \"space\": [\"发动机舱\", \"车厢内部\", \"排气通道\"],\n    \"time\": [\"高速运转时段\", \"噪音传播周期\"],\n    \"function\": [\"隔音\", \"减振\", \"声学阻尼\"]\n  },\n  \"ifr\": \"发动机在高速运转时通过自身结构优化自动消除噪音，保持动力输出且无需额外降噪装置\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "sao_count": 2,
+      "type_validity": 5,
+      "resource_completeness": 5,
+      "ifr_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T2_JSON复杂",
+    "model": "Ali-dashscope/Qwen3.6-Plus",
+    "latency_s": 15.3,
+    "raw_output": "{\n  \"solution_drafts\": [\n    {\n      \"title\": \"智能动态散热通道系统\",\n      \"description\": \"基于可变几何形状专利，设计由形状记忆合金驱动的散热鳍片阵列。通过温度传感器实时监测发动机工况，当散热需求升高时，控制系统触发合金形变使鳍片展开角度增大，形成湍流增强热交换；低负荷时自动收拢减少风阻。结合冷却液流速动态调节算法，在维持散热效率的同时避免传统风扇全速运转产生的高频噪音。系统利用发动机现有线束供电，通过优化流体动力学设计使气流噪声频率移出人耳敏感区间。\",\n      \"applied_principles\": [15, 35],\n      \"resource_mapping\": \"复用发动机ECU控制模块与温度传感器网络，利用废热驱动形状记忆合金相变，通过现有冷却管路集成微型流量调节阀\"\n    },\n    {\n      \"title\": \"磁流变流体自适应散热网络\",\n      \"description\": \"采用磁流变材料构建可重构散热通道，在电磁场作用下流体黏度发生毫秒级变化。高温工况时增强磁场使流体形成定向导热通路，提升热传导效率；常态下保持低黏度状态降低泵送功耗。配合3D打印的梯度孔隙散热基板，通过改变局部磁场强度实现热流路径动态优化。该方案消除机械运动部件，利用电磁场调控替代传统风扇，使运行噪声降低至环境背景水平。系统通过车辆电源总线取电，磁场发生器与现有冷却系统集成于同一模块。\",\n      \"applied_principles\": [28, 35],\n      \"resource_mapping\": \"整合车载12V电源系统，利用发动机缸体余热预热磁流变流体，复用现有冷却液循环泵并替换为电磁驱动模块\"\n    }\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "draft_count": 2,
+      "desc_length": 5,
+      "principles_cited": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T3_因果推理",
+    "model": "Ali-dashscope/Qwen3.6-Plus",
+    "latency_s": 62.65,
+    "raw_output": "{\n  \"root_param\": \"热导率\",\n  \"causal_chain\": [\n    \"第1层为什么→冷却液有效热导率与比热容随温度升高显著衰减，且局部沸腾形成蒸汽隔热膜，大幅降低对流换热效率\",\n    \"第2层为什么→冷却液基础组分（乙二醇/水）在高温下发生热氧化降解，抗泡剂与缓蚀剂失效导致物性劣化与有效沸点下降\",\n    \"第3层为什么→冷却液配方中高温抗氧化剂浓度不足，且系统压力调节机制未能维持足够的背压以抑制饱和蒸气压的临界突破\"\n  ],\n  \"candidate_attributes\": [\n    \"热导率\",\n    \"比热容\",\n    \"饱和蒸气压\"\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "chain_depth": 3,
+      "attributes_count": 3,
+      "root_param_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T4_简洁结构化",
+    "model": "Ali-dashscope/Qwen3.6-Plus",
+    "latency_s": 5.93,
+    "raw_output": "{\n  \"problem_type\": \"phys\",\n  \"improve_desc\": \"流动性\",\n  \"worsen_desc\": \"密封性\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "problem_type_valid": 5,
+      "improve_length": 5,
+      "worsen_length": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T5_评分区分度",
+    "model": "Ali-dashscope/Qwen3.6-Plus",
+    "latency_s": 75.71,
+    "raw_output": "{\n  \"ranked_solutions\": [\n    {\n      \"title\": \"方案C：重新设计排气管路径，使气流远离驾驶舱\",\n      \"tags\": {\n        \"feasibility_score\": 4,\n        \"resource_fit_score\": 3,\n        \"innovation_score\": 3,\n        \"uniqueness_score\": 3,\n        \"risk_level\": \"medium\",\n        \"problem_relevance_score\": 5,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"空间分离原理应用精准，直接切断噪声与热源向驾驶舱的传播路径，问题相关性极高。工程可行性较好，但受限于整车底盘布局与排气背压优化，资源适配度中等。创新性与独特性适中，属成熟工程手段的优化应用。风险中等，需验证气流改道对发动机性能与热管理的影响。逻辑一致性满分，完美契合TRIZ空间分离思想。\"\n    },\n    {\n      \"title\": \"方案A：使用压电材料将振动转化为电能，同时降低噪音\",\n      \"tags\": {\n        \"feasibility_score\": 3,\n        \"resource_fit_score\": 2,\n        \"innovation_score\": 5,\n        \"uniqueness_score\": 5,\n        \"risk_level\": \"high\",\n        \"problem_relevance_score\": 4,\n        \"logical_consistency_score\": 4\n      },\n      \"evaluation_rationale\": \"能量转换原理应用极具前瞻性，将有害振动转化为电能并兼顾阻尼降噪，创新性与独特性突出。但压电材料在发动机高温、强振环境下的耐久性与系统集成难度较大，可行性与资源适配度偏低。问题相关性高，但‘发电’与‘降噪’的协同需精密调谐，逻辑一致性良好。风险较高，涉及电气安全、材料疲劳及潜在共振放大问题。\"\n    },\n    {\n      \"title\": \"方案B：在发动机外壳加装隔音棉\",\n      \"tags\": {\n        \"feasibility_score\": 5,\n        \"resource_fit_score\": 5,\n        \"innovation_score\": 1,\n        \"uniqueness_score\": 1,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 3,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"隔离原理应用最为直接，逻辑一致性极高，工程可行性与资源适配度满分，成本极低且易于实施。但属于传统被动降噪手段，创新性与独特性极低。问题相关性中等，仅能有效阻隔空气传声，对结构振动传递抑制有限，且可能带来散热隐患。风险极低，技术成熟度高，适合作为基础保底方案。\"\n    }\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "solution_count": 3,
+      "score_diversity": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T6_Agent决策",
+    "model": "Ali-dashscope/Qwen3.6-Plus",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - <400> InternalError.Algo.InvalidParameter: 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.. Received Model Group=Ali-dashscope/Qwen3.6-Plus\\nAvailable Model Group Fallbacks=None\", 'type': 'invalid_request_error', 'param': None, 'code': '400'}}"
+  },
+  {
+    "test": "T1_JSON基础",
+    "model": "Ali-dashscope/Qwen3-Max",
+    "latency_s": 11.42,
+    "raw_output": "{\n  \"sao_list\": [\n    {\n      \"subject\": \"汽车发动机\",\n      \"action\": \"产生\",\n      \"object\": \"噪音\",\n      \"function_type\": \"harmful\"\n    },\n    {\n      \"subject\": \"汽车发动机\",\n      \"action\": \"运转\",\n      \"object\": \"自身部件\",\n      \"function_type\": \"useful\"\n    },\n    {\n      \"subject\": \"高速运转状态\",\n      \"action\": \"加剧\",\n      \"object\": \"噪音\",\n      \"function_type\": \"excessive\"\n    },\n    {\n      \"subject\": \"驾驶舱\",\n      \"action\": \"传递\",\n      \"object\": \"噪音\",\n      \"function_type\": \"harmful\"\n    }\n  ],\n  \"resources\": {\n    \"material\": [\"发动机壳体\", \"隔音材料\", \"减振垫\"],\n    \"energy\": [\"机械振动能量\", \"声能\"],\n    \"information\": [\"噪音频率数据\", \"转速信号\"],\n    \"space\": [\"发动机舱空间\", \"驾驶舱与发动机之间的隔离区域\"],\n    \"time\": [\"高速运转时段\", \"噪音传播延迟时间\"],\n    \"function\": [\"振动阻尼\", \"声学隔离\", \"结构刚性支撑\"]\n  },\n  \"ifr\": \"发动机在高速运转时自身消除或完全抑制噪音的产生，而不增加额外复杂性或成本，同时保持其动力输出功能。\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "sao_count": 4,
+      "type_validity": 5,
+      "resource_completeness": 5,
+      "ifr_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T2_JSON复杂",
+    "model": "Ali-dashscope/Qwen3-Max",
+    "latency_s": 15.93,
+    "raw_output": "{\n  \"solution_drafts\": [\n    {\n      \"title\": \"基于动态可变几何散热通道的智能冷却系统\",\n      \"description\": \"该方案采用动态化（原理15）与参数变化（原理35）相结合的方式，设计一种可根据发动机实时温度自动调节截面形状和流通面积的散热通道。在高负载工况下，通道扩张以增强空气流动和热交换效率；在低负载时收缩以减少湍流和气动噪音。通过集成微型形状记忆合金执行器或压电驱动器，实现无电机介入的静音调节，从而在提升散热效率的同时有效抑制噪音增长。此设计借鉴了专利US20200123456中可变几何结构的核心思想，并进一步引入智能响应机制。\",\n      \"applied_principles\": [15, 35],\n      \"resource_mapping\": \"利用发动机废热作为驱动形状记忆合金变形的能量源，同时借助现有冷却气流作为传感与反馈媒介，无需额外能源或复杂控制系统。\"\n    },\n    {\n      \"title\": \"声学优化的非机械式相变散热模块\",\n      \"description\": \"本方案应用机械系统替代原理（28）与参数变化原理（35），用相变材料（PCM）与微通道热管组合替代传统风扇-散热片机械结构。当发动机温度升高，PCM吸收热量并发生相变，同时热管内工作流体蒸发并沿微通道定向传输热量至远端冷凝区。通过调控微通道内部表面张力梯度（如亲/疏水图案化处理），实现流体流动方向与速率的参数化调节，避免使用旋转部件，从根本上消除机械噪音。该系统在高散热需求下仍保持极低声发射，满足静音要求。\",\n      \"applied_principles\": [28, 35],\n      \"resource_mapping\": \"利用发动机壳体余热激活相变材料，并将结构空间复用为热管布置区域，无需新增体积或外部动力源，实现资源高效整合。\"\n    }\n  ]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "draft_count": 2,
+      "desc_length": 5,
+      "principles_cited": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T3_因果推理",
+    "model": "Ali-dashscope/Qwen3-Max",
+    "latency_s": 5.76,
+    "raw_output": "{\n  \"root_param\": \"冷却液沸点\",\n  \"causal_chain\": [\n    \"为什么发动机冷却液在高温工况下性能下降？→因为冷却液温度接近或超过其沸点，发生局部汽化，形成气阻，降低热传导效率。\",\n    \"为什么冷却液会接近或超过其沸点？→因为冷却液的沸点偏低，无法适应发动机高温工况下的热负荷。\",\n    \"为什么冷却液的沸点偏低？→因为冷却液配方中高沸点组分（如乙二醇）比例不足或混入了低沸点杂质（如水分超标或劣质添加剂）。\"\n  ],\n  \"candidate_attributes\": [\"沸点\", \"热导率\"]\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "chain_depth": 3,
+      "attributes_count": 2,
+      "root_param_present": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T4_简洁结构化",
+    "model": "Ali-dashscope/Qwen3-Max",
+    "latency_s": 1.27,
+    "raw_output": "{\n  \"problem_type\": \"phys\",\n  \"improve_desc\": \"流动性好\",\n  \"worsen_desc\": \"密封性差\"\n}",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "problem_type_valid": 5,
+      "improve_length": 5,
+      "worsen_length": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T5_评分区分度",
+    "model": "Ali-dashscope/Qwen3-Max",
+    "latency_s": 16.32,
+    "raw_output": "```json\n{\n  \"ranked_solutions\": [\n    {\n      \"title\": \"方案A：使用压电材料将振动转化为电能，同时降低噪音\",\n      \"tags\": {\n        \"feasibility_score\": 3,\n        \"resource_fit_score\": 2,\n        \"innovation_score\": 5,\n        \"uniqueness_score\": 5,\n        \"risk_level\": \"medium\",\n        \"problem_relevance_score\": 4,\n        \"logical_consistency_score\": 4\n      },\n      \"evaluation_rationale\": \"该方案巧妙结合能量回收与降噪，体现高度创新性和独特性，符合TRIZ中的能量转换原理。然而，压电材料成本高、能量转化效率有限，且在复杂振动环境下稳定性存疑，导致可行性与资源适配性偏低。尽管如此，其对问题（振动与噪音）具有较强相关性，逻辑上自洽。\"\n    },\n    {\n      \"title\": \"方案C：重新设计排气管路径，使气流远离驾驶舱\",\n      \"tags\": {\n        \"feasibility_score\": 4,\n        \"resource_fit_score\": 4,\n        \"innovation_score\": 3,\n        \"uniqueness_score\": 3,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 5,\n        \"logical_consistency_score\": 5\n      },\n      \"evaluation_rationale\": \"该方案通过空间分离直接切断噪音传播路径，逻辑清晰、针对性强，问题相关性极高。在现有车辆架构中调整排气管布局属于常规工程优化，实施风险低，资源匹配度好。虽创新性不如方案A，但稳健可靠，是高效实用的TRIZ应用。\"\n    },\n    {\n      \"title\": \"方案B：在发动机外壳加装隔音棉\",\n      \"tags\": {\n        \"feasibility_score\": 5,\n        \"resource_fit_score\": 5,\n        \"innovation_score\": 1,\n        \"uniqueness_score\": 1,\n        \"risk_level\": \"low\",\n        \"problem_relevance_score\": 3,\n        \"logical_consistency_score\": 4\n      },\n      \"evaluation_rationale\": \"隔音棉是成熟、低成本的被动降噪手段，实施简单、资源适配性极佳，风险最低。但其仅阻隔而非消除噪音源，对振动无作用，问题相关性有限。创新性和独特性几乎为零，属于常规对策，未体现TRIZ深层原理的创造性应用。\"\n    }\n  ]\n}\n```",
+    "json_valid": true,
+    "schema_match": true,
+    "scores": {
+      "solution_count": 3,
+      "score_diversity": 5
+    },
+    "error": null
+  },
+  {
+    "test": "T6_Agent决策",
+    "model": "Ali-dashscope/Qwen3-Max",
+    "latency_s": null,
+    "raw_output": null,
+    "json_valid": false,
+    "schema_match": false,
+    "scores": {},
+    "error": "Error code: 400 - {'error': {'message': \"litellm.BadRequestError: OpenAIException - <400> InternalError.Algo.InvalidParameter: 'messages' must contain the word 'json' in some form, to use 'response_format' of type 'json_object'.. Received Model Group=Ali-dashscope/Qwen3-Max\\nAvailable Model Group Fallbacks=None\", 'type': 'invalid_request_error', 'param': None, 'code': '400'}}"
+  }
+]

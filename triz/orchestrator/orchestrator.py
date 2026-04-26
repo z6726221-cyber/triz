@@ -2,106 +2,13 @@
 import time
 
 from triz.context import WorkflowContext, ConvergenceDecision, SAO, SolutionDraft, Solution, Case, QualitativeTags
-from triz.tools.registry import ToolRegistry
+from triz.tools.registry import register_default_tools
 from triz.skills.registry import SkillRegistry
 from triz.tools.m2_gate import should_trigger_m2
 from triz.tools.m7_convergence import check_convergence
-from triz.tools.fos_search import search_patents
-from triz.tools.solve_contradiction import solve_contradiction
-from triz.tools.query_parameters import map_to_parameters, query_parameters
-from triz.tools.query_matrix import query_matrix
-from triz.tools.query_separation import query_separation
 from triz.utils.markdown_renderer import render_final_report
 from triz.config import MODEL_M1, MODEL_M2, MODEL_M3, MODEL_M4, MODEL_M5, MODEL_M6
 from triz.tools.input_classifier import classify_input
-
-
-def _register_tools() -> ToolRegistry:
-    """注册所有可用 Tools。"""
-    registry = ToolRegistry()
-
-    # 高层 Tools（Orchestrator/Agent 直接调用）
-    registry.register(name="solve_contradiction", func=solve_contradiction)
-    registry.register(name="search_patents", func=search_patents)
-
-    # 底层 Tools（供 Skill 内部调用）
-    registry.register(
-        name="map_to_parameters",
-        func=map_to_parameters,
-        schema={
-            "name": "map_to_parameters",
-            "description": "将中文描述映射到 39 个 TRIZ 工程参数 ID",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "improve_aspect": {"type": "string", "description": "需要改善的方面（2-6个中文词）"},
-                    "worsen_aspect": {"type": "string", "description": "随之恶化的方面（2-6个中文词）"},
-                },
-                "required": ["improve_aspect", "worsen_aspect"],
-            },
-        }
-    )
-    registry.register(
-        name="query_matrix",
-        func=query_matrix,
-        schema={
-            "name": "query_matrix",
-            "description": "查询阿奇舒勒矛盾矩阵",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "improve_param_id": {"type": "integer"},
-                    "worsen_param_id": {"type": "integer"},
-                },
-                "required": ["improve_param_id", "worsen_param_id"],
-            },
-        }
-    )
-    registry.register(
-        name="query_separation",
-        func=query_separation,
-        schema={
-            "name": "query_separation",
-            "description": "查询物理矛盾的分离原理",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "contradiction_desc": {"type": "string"}
-                },
-                "required": ["contradiction_desc"],
-            },
-        }
-    )
-    registry.register(
-        name="search_patents",
-        func=search_patents,
-        schema={
-            "name": "search_patents",
-            "description": "接收搜索词列表，执行 Google Patents 搜索，返回结构化报告",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "queries": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "搜索词列表（英文，3-8个关键词）",
-                    },
-                    "principles": {
-                        "type": "array",
-                        "items": {"type": "integer"},
-                        "description": "发明原理编号列表",
-                    },
-                    "limit_per_query": {
-                        "type": "integer",
-                        "description": "每个 query 最多返回的结果数",
-                        "default": 5,
-                    },
-                },
-                "required": ["queries", "principles"],
-            },
-        }
-    )
-    return registry
 
 
 class Orchestrator:
@@ -119,7 +26,7 @@ class Orchestrator:
 
     def __init__(self, callback=None):
         self.output_buffer = []
-        self.tool_registry = _register_tools()
+        self.tool_registry = register_default_tools()
         self.skill_registry = SkillRegistry(tool_registry=self.tool_registry)
         self.callback = callback
         self._setup_routes()

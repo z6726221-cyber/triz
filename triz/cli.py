@@ -15,6 +15,7 @@ from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.shortcuts import radiolist_dialog
 
 from triz.orchestrator import Orchestrator
+from triz.tools.registry import register_default_tools
 from triz.agent import TrizAgent
 from triz.database.init_db import init_database
 
@@ -233,7 +234,7 @@ class TRIZConsole:
 
         if self.orch is None:
             if self.use_agent:
-                self.orch = TrizAgent(callback=self._on_event)
+                self.orch = TrizAgent(tool_registry=register_default_tools(), callback=self._on_event)
                 mode = "Agent 自主决策"
             else:
                 self.orch = Orchestrator(callback=self._on_event)
@@ -468,7 +469,7 @@ def _run_single(question: str, use_agent: bool = False):
 
     if use_agent:
         console.print("[模式] Agent 自主决策", style=STYLE_INFO)
-        runner = TrizAgent()
+        runner = TrizAgent(tool_registry=register_default_tools())
         run_method = runner.run
     else:
         console.print("[模式] Orchestrator 硬编码", style=STYLE_INFO)

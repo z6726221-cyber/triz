@@ -13,6 +13,7 @@ from triz.context import WorkflowContext
 from triz.agent.skills.registry import AgentSkillRegistry
 from triz.tools.input_classifier import classify_input
 from triz.utils.api_client import OpenAIClient
+from triz.config import AGENT_API_KEY, AGENT_BASE_URL, AGENT_MODEL_NAME
 
 
 class TrizAgent:
@@ -30,7 +31,18 @@ class TrizAgent:
         self.skill_registry = skill_registry or AgentSkillRegistry()
         self.tool_registry = tool_registry
         self.callback = callback
-        self.client = OpenAIClient()
+        # Agent 独立 client：优先用 AGENT_* 配置，否则回退到默认
+        agent_key = AGENT_API_KEY or None
+        agent_url = AGENT_BASE_URL or None
+        agent_model = AGENT_MODEL_NAME or None
+        if agent_key or agent_url or agent_model:
+            self.client = OpenAIClient(
+                api_key=agent_key,
+                base_url=agent_url,
+                model=agent_model,
+            )
+        else:
+            self.client = OpenAIClient()
         self.memory: list[dict] = []  # ReAct 记忆
         self.ctx: WorkflowContext | None = None
 
@@ -75,17 +87,17 @@ class TrizAgent:
             elif action["type"] == "report":
                 return self._generate_report()
 
-            elif action["type"] == "skill":
+            elif action["type"] in ("skill", "tool"):
                 name = action.get("name", "")
                 if not name:
                     self.memory.append({
                         "role": "system",
-                        "content": "错误：skill 名称不能为空，请重新决策。",
+                        "content": "错误：名称不能为空，请重新决策。",
                     })
                     continue
 
                 # 判断是 Skill 还是 Tool
-                is_tool = self.tool_registry and self.tool_registry.get(name)
+                is_tool = action["type"] == "tool" or (self.tool_registry and self.tool_registry.get(name))
                 step_type = "Tool" if is_tool else "Skill"
 
                 self._notify("step_start", {
@@ -215,8 +227,19 @@ class TrizAgent:
         if self.tool_registry:
             lines.append("")
             lines.append("=== 可用 Tools ===")
-            for tool_name in self.tool_registry.list_tools():
-                lines.append(f"- {tool_name}")
+            for schema in self.tool_registry.get_schemas():
+                func = schema.get("function", {})
+                name = func.get("name", "unknown")
+                desc = func.get("description", "无描述")
+                params = func.get("parameters", {}).get("properties", {})
+                required = func.get("parameters", {}).get("required", [])
+                lines.append(f"- `{name}`: {desc}")
+                if params:
+                    param_parts = []
+                    for p_name, p_info in params.items():
+                        req = "*" if p_name in required else ""
+                        param_parts.append(f"{p_name}{req}: {p_info.get('description', '')}")
+                    lines.append(f"  参数: {', '.join(param_parts)}")
 
         lines.append("")
         lines.append("请思考当前状态，决定下一步行动。")

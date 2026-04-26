@@ -1,0 +1,87 @@
+{
+  "test_name": "test_3case",
+  "mode": "orchestrator",
+  "timestamp": "2026-04-24T20:19:02.900590",
+  "total": 3,
+  "passed": 3,
+  "failed": 0,
+  "timeouts": 0,
+  "avg_time": 196.98,
+  "results": [
+    {
+      "question": "汽车发动机噪音大，油耗高",
+      "success": true,
+      "elapsed_seconds": 199.55,
+      "report_length": 755,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "# TRIZ 解决方案报告\n\n## 问题\n汽车发动机噪音大，油耗高\n\n## 核心矛盾\n改善能量转化效率导致压力波动恶化\n\n## 推荐方案（按理想度排序）\n\n### 方案 1 [理想度: 0.82 | 问题匹配: 5/5 | 逻辑一致性: 5/5]\n**原理**: [18, 31]\n**标题**: 动态可调进气谐振系统匹配燃烧相位\n**描述**: 应用原理18（机械振动）和原理31（多孔材料），在进气歧管内设置由压力场驱动的柔性膜片与多孔阻尼结构。当发动机负荷变化导致进气压力波动时，膜片随压力场（场资源）自动变形，改变谐振腔有效长度，使进气脉冲与气门开启相位动态匹配，减少充气损失并抑制压力激波噪音。多孔材料层吸收高频声能，转化为微热耗散。该系统利用燃烧过程自身产生的压力场作为控制信号，无需电子传感器或执行器，提升容积效率的同时降低油耗与噪音。\n**可行性**: 4/5 | 风险: low\n\n### 方案 2 [理想度: 0.76 | 问题匹配: 5/5 | 逻辑一致性: 4/5]\n**原理**: [12, 28]\n**标题**: 采用废气再循环与声学谐振腔耦合结构\n**描述**: 结合原",
+      "steps_log": [
+        "m1_modeling",
+        "m2_causal",
+        "m3_formulation",
+        "m4_solver",
+        "FOS",
+        "m5_generation",
+        "m6_evaluation"
+      ],
+      "agent_thoughts": [],
+      "mode": "orchestrator",
+      "expected": "success",
+      "description": "机械-简单：发动机噪音与油耗",
+      "complexity": "low"
+    },
+    {
+      "question": "手机电池续航短，用户需要轻薄手机",
+      "success": true,
+      "elapsed_seconds": 213.73,
+      "report_length": 59,
+      "errors": [
+        {
+          "node": "方案评估",
+          "step": "m6_evaluation",
+          "error": "2 validation errors for M6Output\nunresolved_signals.0\n  Input should be a valid string [type=string_type, input_value={'title': '集成自适...ation_reason non-empty'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type\nunresolved_signals.1\n  Input should be a valid string [type=string_type, input_value={'title': '构建模块...ation_reason non-empty'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/string_type"
+        }
+      ],
+      "failure_stage": null,
+      "report_preview": "**需要补充信息**：无可用方案进行评估\n\n请提供更多细节，例如：具体的使用场景、现有的限制条件、已尝试的解决方案等。",
+      "steps_log": [
+        "m1_modeling",
+        "m2_causal",
+        "m3_formulation",
+        "m4_solver",
+        "FOS",
+        "m5_generation",
+        "m6_evaluation"
+      ],
+      "agent_thoughts": [],
+      "mode": "orchestrator",
+      "expected": "success",
+      "description": "电子-物理矛盾：续航 vs 轻薄",
+      "complexity": "medium"
+    },
+    {
+      "question": "化工反应器内壁腐蚀导致产品污染，更换材料又成本太高",
+      "success": true,
+      "elapsed_seconds": 177.67,
+      "report_length": 488,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "# TRIZ 解决方案报告\n\n## 问题\n化工反应器内壁腐蚀导致产品污染，更换材料又成本太高\n\n## 核心矛盾\n改善材料耐蚀性导致化学活性恶化\n\n## 推荐方案（按理想度排序）\n\n### 方案 1 [理想度: 0.86 | 问题匹配: 5/5 | 逻辑一致性: 5/5]\n**原理**: [36, 22, 6, 38]\n**标题**: 利用腐蚀产物原位形成保护性钝化膜\n**描述**: 借鉴自修复涂层和钝化技术的跨界案例，通过调控反应介质成分（如微量氧化剂或pH缓冲剂），促使腐蚀初期产生的金属离子与介质中的阴离子（如磷酸根、硅酸根）在内壁表面原位生成致密、惰性的钝化膜。该膜可隔绝进一步腐蚀，同时因成分与产品兼容而不引入污染。此方案应用原理36（相变）通过化学反应诱导固相膜形成，原理22（变害为利）将腐蚀产物转化为保护层，原理6（多用性）使反应介质兼具反应与成膜功能，原理38（强氧化剂替代）通过温和氧化环境促进钝化而非剧烈腐蚀。全程仅利用现有反应介质和内壁材料，无需高成本替换。\n**可行性**: 4/5 | 风险: low\n\n## 评估依据\n信号已清空，矛盾已充分解决",
+      "steps_log": [
+        "m1_modeling",
+        "m2_causal",
+        "m3_formulation",
+        "m4_solver",
+        "FOS",
+        "m5_generation",
+        "m6_evaluation"
+      ],
+      "agent_thoughts": [],
+      "mode": "orchestrator",
+      "expected": "success",
+      "description": "化工-材料矛盾：腐蚀 vs 成本",
+      "complexity": "medium"
+    }
+  ]
+}

@@ -11,6 +11,11 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
 
+# 主 Agent 独立配置（可选，不配置则回退到 OPENAI_* 和 MODEL_NAME）
+AGENT_API_KEY = os.getenv("AGENT_API_KEY", "")
+AGENT_BASE_URL = os.getenv("AGENT_BASE_URL", "")
+AGENT_MODEL_NAME = os.getenv("AGENT_MODEL_NAME", "")
+
 # 各 Skill 可独立配置模型（如果不配置，默认使用 MODEL_NAME）
 MODEL_M1 = os.getenv("MODEL_M1", MODEL_NAME)
 MODEL_M2 = os.getenv("MODEL_M2", MODEL_NAME)

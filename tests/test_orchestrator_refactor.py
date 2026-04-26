@@ -1,11 +1,11 @@
 import pytest
-from triz.orchestrator import Orchestrator, _register_tools
-from triz.tools.registry import ToolRegistry
+from triz.orchestrator import Orchestrator
+from triz.tools.registry import ToolRegistry, register_default_tools
 
 
 def test_register_tools():
     """验证 Tools 注册正确"""
-    registry = _register_tools()
+    registry = register_default_tools()
     tools = registry.list_tools()
     assert "solve_contradiction" in tools
     assert "search_patents" in tools

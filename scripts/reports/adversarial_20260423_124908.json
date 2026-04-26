@@ -1,0 +1,76 @@
+{
+  "test_name": "adversarial",
+  "timestamp": "2026-04-23T12:49:08.553881",
+  "total": 6,
+  "passed": 6,
+  "failed": 0,
+  "avg_time": 2.82,
+  "results": [
+    {
+      "question": "今天天气怎么样",
+      "success": true,
+      "elapsed_seconds": 0.49,
+      "report_length": 72,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "您的问题「今天天气怎么样」不涉及工程技术矛盾，TRIZ 方法可能无法提供有效帮助。请描述一个具体的技术问题，例如：「如何提高手术刀片的耐用性」。",
+      "expected": "rejected",
+      "description": "天气询问"
+    },
+    {
+      "question": "如何追女朋友",
+      "success": true,
+      "elapsed_seconds": 0.44,
+      "report_length": 71,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "您的问题「如何追女朋友」不涉及工程技术矛盾，TRIZ 方法可能无法提供有效帮助。请描述一个具体的技术问题，例如：「如何提高手术刀片的耐用性」。",
+      "expected": "rejected",
+      "description": "社交问题"
+    },
+    {
+      "question": "1+1 等于几",
+      "success": true,
+      "elapsed_seconds": 7.24,
+      "report_length": 72,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "您的问题「1+1 等于几」不涉及工程技术矛盾，TRIZ 方法可能无法提供有效帮助。请描述一个具体的技术问题，例如：「如何提高手术刀片的耐用性」。",
+      "expected": "rejected_or_clarify",
+      "description": "数学问题"
+    },
+    {
+      "question": "如何成为亿万富翁",
+      "success": true,
+      "elapsed_seconds": 7.48,
+      "report_length": 73,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "您的问题「如何成为亿万富翁」不涉及工程技术矛盾，TRIZ 方法可能无法提供有效帮助。请描述一个具体的技术问题，例如：「如何提高手术刀片的耐用性」。",
+      "expected": "rejected",
+      "description": "非工程目标"
+    },
+    {
+      "question": "如何做饭更好吃",
+      "success": true,
+      "elapsed_seconds": 0.59,
+      "report_length": 72,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "您的问题「如何做饭更好吃」不涉及工程技术矛盾，TRIZ 方法可能无法提供有效帮助。请描述一个具体的技术问题，例如：「如何提高手术刀片的耐用性」。",
+      "expected": "rejected",
+      "description": "烹饪问题"
+    },
+    {
+      "question": "如何减肥",
+      "success": true,
+      "elapsed_seconds": 0.69,
+      "report_length": 69,
+      "errors": [],
+      "failure_stage": null,
+      "report_preview": "您的问题「如何减肥」不涉及工程技术矛盾，TRIZ 方法可能无法提供有效帮助。请描述一个具体的技术问题，例如：「如何提高手术刀片的耐用性」。",
+      "expected": "rejected",
+      "description": "健康问题"
+    }
+  ]
+}
