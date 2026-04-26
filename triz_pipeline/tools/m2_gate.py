@@ -1,4 +1,5 @@
 """M2 门控 Tool：判断是否需要触发根因分析"""
+
 from triz_pipeline.context import WorkflowContext
 
 

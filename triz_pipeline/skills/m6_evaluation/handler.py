@@ -1,13 +1,17 @@
 """M6 方案评估 Skill：独立评审方案草案，给出量化评分和理想度。"""
+
 from pydantic import BaseModel
 
 from triz_pipeline.skills.base import Skill
 from triz_pipeline.context import WorkflowContext, SolutionDraft
-from triz_pipeline.skills.m6_evaluation.scripts.calculate_ideality import recalculate_all
+from triz_pipeline.skills.m6_evaluation.scripts.calculate_ideality import (
+    recalculate_all,
+)
 
 
 class M6Input(BaseModel):
     """M6 Skill 输入。"""
+
     question: str
     solution_drafts: list[SolutionDraft]
     ifr: str
@@ -16,6 +20,7 @@ class M6Input(BaseModel):
 
 class M6Output(BaseModel):
     """M6 Skill 输出。"""
+
     ranked_solutions: list[dict]
     max_ideality: float
     unresolved_signals: list[str]
@@ -69,7 +74,9 @@ class M6EvaluationSkill(Skill[M6Input, M6Output]):
         if len(set(ideality_scores)) == 1 and len(ideality_scores) > 1:
             warnings.append("所有方案理想度相同，评分缺乏区分度")
         # 检查 relevance 分布
-        relevance_scores = [s.get("problem_relevance_score", 3) for s in output.ranked_solutions]
+        relevance_scores = [
+            s.get("problem_relevance_score", 3) for s in output.ranked_solutions
+        ]
         if all(r >= 4 for r in relevance_scores) and ctx.question:
             # 如果所有方案都高分，检查是否是非工程问题
             non_engineering_keywords = ["天气", "追女", "等于几", "亿万富翁", "怎么样"]

@@ -1,4 +1,5 @@
 """Skill 基类：定义真正的 Agent Skill 接口。"""
+
 import inspect
 import json
 import re
@@ -119,7 +120,9 @@ class Skill(ABC, Generic[InputT, OutputT]):
         """
         return []
 
-    def fallback(self, input_data: InputT, error: Exception, ctx: WorkflowContext) -> OutputT | None:
+    def fallback(
+        self, input_data: InputT, error: Exception, ctx: WorkflowContext
+    ) -> OutputT | None:
         """失败时的降级策略。子类可覆盖。
 
         Returns:
@@ -143,7 +146,7 @@ class Skill(ABC, Generic[InputT, OutputT]):
         content = skill_md.read_text(encoding="utf-8")
 
         match = _FRONTMATTER_RE.match(content)
-        prompt = content[match.end():].strip() if match else content
+        prompt = content[match.end() :].strip() if match else content
 
         # 追加重试提示（校验失败时）
         if self._retry_hints:
@@ -172,7 +175,9 @@ class Skill(ABC, Generic[InputT, OutputT]):
 
         return ref_file.read_text(encoding="utf-8")
 
-    def _call_llm(self, system_prompt: str, user_prompt: str, json_mode: bool = False) -> str:
+    def _call_llm(
+        self, system_prompt: str, user_prompt: str, json_mode: bool = False
+    ) -> str:
         """通用 LLM 调用。"""
         return self.client.chat(
             prompt=user_prompt,

@@ -1,4 +1,5 @@
 """批量回归测试（Stress Test）：同一问题多次运行，暴露偶发性错误。"""
+
 import sys
 from test_runner import run_batch
 
@@ -27,12 +28,14 @@ def main():
     test_cases = []
     for p in PROBLEMS:
         for i in range(REPEAT):
-            test_cases.append({
-                "question": p["question"],
-                "category": p["category"],
-                "reason": p["reason"],
-                "run_id": i + 1,
-            })
+            test_cases.append(
+                {
+                    "question": p["question"],
+                    "category": p["category"],
+                    "reason": p["reason"],
+                    "run_id": i + 1,
+                }
+            )
 
     summary = run_batch(test_cases, "stress_test", verbose="-v" in sys.argv)
 
@@ -48,7 +51,9 @@ def main():
         if q_fail > 0:
             for r in q_results:
                 if not r["success"]:
-                    print(f"    FAIL [{r['run_id']}]: {r['failure_stage']} - {r['errors']}")
+                    print(
+                        f"    FAIL [{r['run_id']}]: {r['failure_stage']} - {r['errors']}"
+                    )
 
     return summary["failed"]
 

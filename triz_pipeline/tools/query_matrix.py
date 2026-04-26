@@ -1,6 +1,6 @@
 """矩阵查询 Tool：查询阿奇舒勒矛盾矩阵。"""
-from triz_pipeline.database.queries import get_matrix_principles
 
+from triz_pipeline.database.queries import get_matrix_principles
 
 # 通用推荐原理：当矩阵中无直接匹配时返回的最常用原理
 FALLBACK_PRINCIPLES = [1, 15, 28, 35, 3, 27, 40, 2]

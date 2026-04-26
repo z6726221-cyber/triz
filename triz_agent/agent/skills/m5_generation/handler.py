@@ -1,4 +1,5 @@
 """M5 方案生成 Agent Skill：搜索跨领域案例并生成具体方案，输出 Markdown。"""
+
 from triz_agent.agent.skills.base import AgentSkill
 from triz_agent.context import WorkflowContext
 

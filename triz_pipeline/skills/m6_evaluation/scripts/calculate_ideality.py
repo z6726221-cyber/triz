@@ -1,4 +1,5 @@
 """理想度计算：确定性函数，不调 LLM。"""
+
 from typing import Any
 
 

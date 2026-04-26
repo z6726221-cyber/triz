@@ -1,4 +1,5 @@
 """TRIZ Agent CLI：交互式 TUI。"""
+
 import sys
 import os
 import argparse
@@ -138,7 +139,9 @@ class TRIZAgentConsole:
             self._show_help()
 
         else:
-            self.console.print(f"[错误] 未知命令: {action}，输入 /help 查看列表", style=STYLE_ERROR)
+            self.console.print(
+                f"[错误] 未知命令: {action}，输入 /help 查看列表", style=STYLE_ERROR
+            )
 
         return False
 
@@ -158,7 +161,9 @@ class TRIZAgentConsole:
 
     def _save_report(self, filename: str):
         if not self.last_report:
-            self.console.print("[错误] 暂无报告可保存，先执行一次分析", style=STYLE_ERROR)
+            self.console.print(
+                "[错误] 暂无报告可保存，先执行一次分析", style=STYLE_ERROR
+            )
             return
 
         filename = filename or "report.md"
@@ -168,7 +173,9 @@ class TRIZAgentConsole:
         try:
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(self.last_report)
-            self.console.print(f"[系统] 报告已保存: {os.path.abspath(filename)}", style=STYLE_SUCCESS)
+            self.console.print(
+                f"[系统] 报告已保存: {os.path.abspath(filename)}", style=STYLE_SUCCESS
+            )
         except Exception as e:
             self.console.print(f"[错误] 保存失败: {e}", style=STYLE_ERROR)
 
@@ -189,18 +196,24 @@ class TRIZAgentConsole:
                 found = True
         if not found:
             available = ", ".join(n.get("node_name", "") for n in self._nodes)
-            self.console.print(f"[错误] 未找到节点 '{node_name}'。可用: {available}", style=STYLE_ERROR)
+            self.console.print(
+                f"[错误] 未找到节点 '{node_name}'。可用: {available}", style=STYLE_ERROR
+            )
 
     def _run_analysis(self, question: str):
         self._nodes = []
         self.last_report = ""
 
         if self.agent is None:
-            self.agent = TrizAgent(tool_registry=register_default_tools(), callback=self._on_event)
+            self.agent = TrizAgent(
+                tool_registry=register_default_tools(), callback=self._on_event
+            )
             self.console.print("[模式] Agent 自主决策", style=STYLE_INFO)
 
         self.console.print()
-        self.console.print(f"[分析开始] {datetime.now().strftime('%H:%M:%S')}", style=STYLE_INFO)
+        self.console.print(
+            f"[分析开始] {datetime.now().strftime('%H:%M:%S')}", style=STYLE_INFO
+        )
         self.console.print()
 
         try:
@@ -315,14 +328,18 @@ class TRIZAgentConsole:
         self.console.print(Markdown(content))
         self.console.print()
         self.console.print("─" * 50, style="dim")
-        self.console.print("分析完成。输入新问题继续，或 /save 保存报告。", style=STYLE_INFO)
+        self.console.print(
+            "分析完成。输入新问题继续，或 /save 保存报告。", style=STYLE_INFO
+        )
         self.console.print()
 
 
 def _run_single(question: str):
     """单次执行模式（非交互）。"""
     if not question or not question.strip():
-        Console().print("[错误] 问题不能为空，使用 -q 指定问题或直接进入交互模式", style=STYLE_ERROR)
+        Console().print(
+            "[错误] 问题不能为空，使用 -q 指定问题或直接进入交互模式", style=STYLE_ERROR
+        )
         sys.exit(1)
 
     console = Console()

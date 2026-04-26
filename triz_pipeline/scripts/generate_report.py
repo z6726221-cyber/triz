@@ -1,6 +1,7 @@
 """生成 Orchestrator vs Agent 双模式对比报告。
 用法: python generate_report.py <orch_json> <agent_json>
 """
+
 import json
 import sys
 from datetime import datetime
@@ -41,15 +42,23 @@ def generate_report(orch_path: str, agent_path: str, output_path: str = None):
     # 逐用例对比
     lines.append("## 逐用例对比")
     lines.append("")
-    lines.append("| # | 问题 | Orch 状态 | Orch 耗时 | Agent 状态 | Agent 耗时 | 步骤差异 |")
-    lines.append("|---|------|-----------|-----------|------------|------------|----------|")
+    lines.append(
+        "| # | 问题 | Orch 状态 | Orch 耗时 | Agent 状态 | Agent 耗时 | 步骤差异 |"
+    )
+    lines.append(
+        "|---|------|-----------|-----------|------------|------------|----------|"
+    )
 
     for i, q in enumerate(all_questions, 1):
         o = orch_results.get(q, {})
         a = agent_results.get(q, {})
 
-        o_status = "PASS" if o.get("success") else ("TIMEOUT" if o.get("timeout") else "FAIL")
-        a_status = "PASS" if a.get("success") else ("TIMEOUT" if a.get("timeout") else "FAIL")
+        o_status = (
+            "PASS" if o.get("success") else ("TIMEOUT" if o.get("timeout") else "FAIL")
+        )
+        a_status = (
+            "PASS" if a.get("success") else ("TIMEOUT" if a.get("timeout") else "FAIL")
+        )
 
         o_time = o.get("elapsed_seconds", 0)
         a_time = a.get("elapsed_seconds", 0)
@@ -67,7 +76,9 @@ def generate_report(orch_path: str, agent_path: str, output_path: str = None):
             diff = "一致"
 
         q_short = q[:40] + "..." if len(q) > 40 else q
-        lines.append(f"| {i} | {q_short} | {o_status} | {o_time}s | {a_status} | {a_time}s | {diff} |")
+        lines.append(
+            f"| {i} | {q_short} | {o_status} | {o_time}s | {a_status} | {a_time}s | {diff} |"
+        )
 
     lines.append("")
 
@@ -98,9 +109,13 @@ def generate_report(orch_path: str, agent_path: str, output_path: str = None):
         for q, o, a in failures:
             lines.append(f"### {q}")
             if not o.get("success"):
-                lines.append(f"- Orchestrator: {o.get('failure_stage', 'unknown')} - {o.get('errors', [])}")
+                lines.append(
+                    f"- Orchestrator: {o.get('failure_stage', 'unknown')} - {o.get('errors', [])}"
+                )
             if not a.get("success"):
-                lines.append(f"- Agent: {a.get('failure_stage', 'unknown')} - {a.get('errors', [])}")
+                lines.append(
+                    f"- Agent: {a.get('failure_stage', 'unknown')} - {a.get('errors', [])}"
+                )
             lines.append("")
     else:
         lines.append("## 失败/超时详情")
@@ -116,7 +131,9 @@ def generate_report(orch_path: str, agent_path: str, output_path: str = None):
     if orch_ok and agent_ok:
         lines.append("两种模式全部通过测试，功能正确性一致。")
     elif orch_ok and not agent_ok:
-        lines.append("Orchestrator 全部通过，Agent 存在失败用例，需排查 Agent 决策逻辑。")
+        lines.append(
+            "Orchestrator 全部通过，Agent 存在失败用例，需排查 Agent 决策逻辑。"
+        )
     elif not orch_ok and agent_ok:
         lines.append("Agent 全部通过，Orchestrator 存在失败用例，需排查硬编码流程。")
     else:

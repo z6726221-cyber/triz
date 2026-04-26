@@ -1,4 +1,5 @@
 """M3 问题定型 Agent Skill：将根因分析转化为标准化矛盾表述，输出 Markdown。"""
+
 from triz_agent.agent.skills.base import AgentSkill
 from triz_agent.context import WorkflowContext
 

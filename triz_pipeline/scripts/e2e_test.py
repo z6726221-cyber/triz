@@ -2,6 +2,7 @@
 用法: python e2e_test.py <mode>
   mode: orchestrator 或 agent
 """
+
 import sys
 from test_runner import run_batch
 
@@ -23,10 +24,14 @@ def main():
     print(f"端到端测试开始 | 模式: {mode} | 用例数: {len(ALL_CASES)} | 间隔: {delay}s")
     print(f"实时日志: {log_file}")
 
-    summary = run_batch(ALL_CASES, "e2e_full", mode=mode, delay=delay, log_file=log_file)
+    summary = run_batch(
+        ALL_CASES, "e2e_full", mode=mode, delay=delay, log_file=log_file
+    )
 
     failed = summary["failed"] + summary["timeouts"]
-    print(f"\n最终结果: {summary['passed']}/{summary['total']} 通过, {failed} 失败/超时")
+    print(
+        f"\n最终结果: {summary['passed']}/{summary['total']} 通过, {failed} 失败/超时"
+    )
     return 0 if failed == 0 else 1
 
 

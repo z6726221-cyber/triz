@@ -1,4 +1,5 @@
 """M6 方案评估 Agent Skill：独立评审方案草案，给出量化评分和理想度，输出 Markdown。"""
+
 from triz_agent.agent.skills.base import AgentSkill
 from triz_agent.context import WorkflowContext
 

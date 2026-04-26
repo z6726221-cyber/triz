@@ -4,6 +4,7 @@
 - SKILL.md: Skill 定义 / system prompt
 - handler.py: Python 执行器（输入验证、LLM 调用、输出解析、fallback）
 """
+
 from triz_pipeline.skills.base import Skill
 from triz_pipeline.skills.registry import SkillRegistry
 

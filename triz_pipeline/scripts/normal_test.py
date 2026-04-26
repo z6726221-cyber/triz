@@ -1,4 +1,5 @@
 """正常工程问题测试：验证标准TRIZ流程对不同复杂度/领域问题的方案生成质量。"""
+
 import sys
 from test_runner import run_batch
 

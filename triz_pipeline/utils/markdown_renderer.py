@@ -1,4 +1,5 @@
 """Markdown 渲染工具：将节点输出和最终结果渲染为 Markdown"""
+
 from triz_pipeline.context import WorkflowContext, Solution
 
 
@@ -33,7 +34,9 @@ def _render_problem_modeling(ctx: WorkflowContext) -> str:
     if ctx.sao_list:
         lines.append("### 功能建模")
         for sao in ctx.sao_list:
-            lines.append(f"- [{sao.subject}] -> [{sao.action}] -> [{sao.object}] ({sao.function_type})")
+            lines.append(
+                f"- [{sao.subject}] -> [{sao.action}] -> [{sao.object}] ({sao.function_type})"
+            )
     if ctx.ifr:
         lines.append(f"- **IFR**: {ctx.ifr}")
     if ctx.resources:
@@ -94,7 +97,9 @@ def _render_solution_evaluation(ctx: WorkflowContext) -> str:
     return "\n".join(lines)
 
 
-def render_final_report(question: str, contradiction: str, solutions: list[Solution], reason: str) -> str:
+def render_final_report(
+    question: str, contradiction: str, solutions: list[Solution], reason: str
+) -> str:
     lines = [
         "# TRIZ 解决方案报告",
         "",
@@ -111,18 +116,22 @@ def render_final_report(question: str, contradiction: str, solutions: list[Solut
     for i, sol in enumerate(solutions[:3], 1):
         rel = sol.tags.problem_relevance_score
         cons = sol.tags.logical_consistency_score
-        lines.extend([
-            f"### 方案 {i} [理想度: {sol.ideality_score:.2f} | 问题匹配: {rel}/5 | 逻辑一致性: {cons}/5]",
-            f"**原理**: {sol.draft.applied_principles}",
-            f"**标题**: {sol.draft.title}",
-            f"**描述**: {sol.draft.description}",
-            f"**可行性**: {sol.tags.feasibility_score}/5 | 风险: {sol.tags.risk_level}",
-            "",
-        ])
+        lines.extend(
+            [
+                f"### 方案 {i} [理想度: {sol.ideality_score:.2f} | 问题匹配: {rel}/5 | 逻辑一致性: {cons}/5]",
+                f"**原理**: {sol.draft.applied_principles}",
+                f"**标题**: {sol.draft.title}",
+                f"**描述**: {sol.draft.description}",
+                f"**可行性**: {sol.tags.feasibility_score}/5 | 风险: {sol.tags.risk_level}",
+                "",
+            ]
+        )
 
-    lines.extend([
-        "## 评估依据",
-        reason,
-    ])
+    lines.extend(
+        [
+            "## 评估依据",
+            reason,
+        ]
+    )
 
     return "\n".join(lines)

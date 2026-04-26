@@ -1,11 +1,18 @@
 """SkillRegistry：自动发现和管理 Agent Skills。"""
+
 import importlib
 from pathlib import Path
 
 from triz_pipeline.skills.base import Skill
 from triz_pipeline.utils.api_client import OpenAIClient
-from triz_pipeline.config import MODEL_NAME, MODEL_M1, MODEL_M2, MODEL_M3, MODEL_M5, MODEL_M6
-
+from triz_pipeline.config import (
+    MODEL_NAME,
+    MODEL_M1,
+    MODEL_M2,
+    MODEL_M3,
+    MODEL_M5,
+    MODEL_M6,
+)
 
 # Skill 名称 → 环境变量模型配置的映射
 _SKILL_MODEL_MAP = {
@@ -69,7 +76,9 @@ class SkillRegistry:
                         skill_client = OpenAIClient()
 
                     try:
-                        skill_instance = attr(client=skill_client, tool_registry=self.tool_registry)
+                        skill_instance = attr(
+                            client=skill_client, tool_registry=self.tool_registry
+                        )
                     except TypeError:
                         skill_instance = attr(client=skill_client)
                     self._skills[attr.name] = skill_instance

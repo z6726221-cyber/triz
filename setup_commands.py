@@ -6,6 +6,7 @@ r"""安装命令行入口：在 .venv/Scripts/ 中创建 triz / triz_agent / tri
 
 之后即可直接使用 triz、triz_agent、triz_pipeline 命令。
 """
+
 import os
 import sys
 import shutil
@@ -34,7 +35,7 @@ def main():
         # %~dp0 = .cmd 文件所在目录（.venv/Scripts/）
         # 设置 PYTHONPATH 确保项目根目录在 sys.path 中
         content = (
-            f'@echo off\r\n'
+            f"@echo off\r\n"
             f'set "PYTHONPATH={project_root}"\r\n'
             f'"%~dp0python.exe" -m {module} %*\r\n'
         )

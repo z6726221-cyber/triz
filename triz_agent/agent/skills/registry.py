@@ -1,11 +1,18 @@
 """AgentSkillRegistry：自动发现和管理 Agent 模式的 Skills。"""
+
 import importlib
 from pathlib import Path
 
 from triz_agent.agent.skills.base import AgentSkill
 from triz_agent.utils.api_client import OpenAIClient
-from triz_agent.config import MODEL_NAME, MODEL_M1, MODEL_M2, MODEL_M3, MODEL_M5, MODEL_M6
-
+from triz_agent.config import (
+    MODEL_NAME,
+    MODEL_M1,
+    MODEL_M2,
+    MODEL_M3,
+    MODEL_M5,
+    MODEL_M6,
+)
 
 _SKILL_MODEL_MAP = {
     "m1_modeling": MODEL_M1,

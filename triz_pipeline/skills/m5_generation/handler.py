@@ -1,4 +1,5 @@
 """M5 方案生成 Skill v2：搜索词生成 + 结果过滤 + 方案生成。"""
+
 from pydantic import BaseModel
 
 from triz_pipeline.skills.base import Skill
@@ -7,12 +8,14 @@ from triz_pipeline.context import WorkflowContext, SolutionDraft, Case, FOSRepor
 
 class FilteredCase(Case):
     """带相关性评分的 Case。"""
+
     relevance_score: int = 3
     relevance_reason: str = ""
 
 
 class M5Input(BaseModel):
     """M5 Skill 输入。"""
+
     question: str
     principles: list[int]
     cases: list[Case]
@@ -28,6 +31,7 @@ class M5Input(BaseModel):
 
 class M5Output(BaseModel):
     """M5 Skill 输出。"""
+
     solution_drafts: list[SolutionDraft]
 
     # v2 新增
@@ -96,15 +100,19 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
         # 从 LLM 输出中提取 filtered_cases
         for fc in raw.get("filtered_cases", []):
             if isinstance(fc, dict) and fc.get("relevance_score", 0) >= 3:
-                output.filtered_cases.append(FilteredCase(
-                    principle_id=input_data.principles[0] if input_data.principles else 0,
-                    source=fc.get("source", "Google Patents"),
-                    title=fc.get("title", ""),
-                    description=fc.get("description", fc.get("snippet", "")),
-                    function=fc.get("function", ""),
-                    relevance_score=fc.get("relevance_score", 3),
-                    relevance_reason=fc.get("relevance_reason", ""),
-                ))
+                output.filtered_cases.append(
+                    FilteredCase(
+                        principle_id=(
+                            input_data.principles[0] if input_data.principles else 0
+                        ),
+                        source=fc.get("source", "Google Patents"),
+                        title=fc.get("title", ""),
+                        description=fc.get("description", fc.get("snippet", "")),
+                        function=fc.get("function", ""),
+                        relevance_score=fc.get("relevance_score", 3),
+                        relevance_reason=fc.get("relevance_reason", ""),
+                    )
+                )
 
         return output
 
@@ -116,7 +124,9 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
             if not draft.applied_principles:
                 warnings.append(f"方案 '{draft.title}' 未引用发明原理")
             if len(draft.description) < 50:
-                warnings.append(f"方案 '{draft.title}' 描述过短（{len(draft.description)} 字符）")
+                warnings.append(
+                    f"方案 '{draft.title}' 描述过短（{len(draft.description)} 字符）"
+                )
         return warnings
 
     def _search_phase(self, data: M5Input, ctx: WorkflowContext) -> dict:
@@ -146,16 +156,20 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
             tool_registry = getattr(self, "tool_registry", None)
             if tool_registry:
                 try:
-                    fos_report = tool_registry.execute("search_patents", {
-                        "queries": queries,
-                        "principles": data.principles,
-                        "limit_per_query": 5,
-                    })
+                    fos_report = tool_registry.execute(
+                        "search_patents",
+                        {
+                            "queries": queries,
+                            "principles": data.principles,
+                            "limit_per_query": 5,
+                        },
+                    )
                 except Exception:
                     fos_report = FOSReport()
             else:
                 # 直接调用 search_patents（无 tool_registry 时）
                 from triz_pipeline.tools.fos_search import search_patents
+
                 try:
                     fos_report = search_patents(
                         queries=queries,
@@ -219,15 +233,23 @@ class M5GenerationSkill(Skill[M5Input, M5Output]):
 
         return "\n".join(lines)
 
-    def fallback(self, input_data: M5Input, error: Exception, ctx: WorkflowContext) -> M5Output:
+    def fallback(
+        self, input_data: M5Input, error: Exception, ctx: WorkflowContext
+    ) -> M5Output:
         """降级策略：基于 principles 生成简化方案。"""
         if not input_data.principles:
             return M5Output(solution_drafts=[])
 
         drafts = []
         for principle_id in input_data.principles[:3]:
-            related_cases = [c for c in input_data.cases if c.principle_id == principle_id]
-            case_desc = related_cases[0].description if related_cases else "参考类似工程问题的解决方案"
+            related_cases = [
+                c for c in input_data.cases if c.principle_id == principle_id
+            ]
+            case_desc = (
+                related_cases[0].description
+                if related_cases
+                else "参考类似工程问题的解决方案"
+            )
 
             draft = SolutionDraft(
                 title=f"基于原理{principle_id}的改进方案",

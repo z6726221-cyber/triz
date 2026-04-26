@@ -6,8 +6,11 @@ Agent 模式特点：
 - Agent 负责上下文传递：将上游 Markdown 输出传给下游 Skill
 - 方法论约束通过 AGENT.md 提供
 """
+
 import json
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from triz_agent.context import WorkflowContext
 from triz_agent.agent.skills.registry import AgentSkillRegistry
@@ -26,8 +29,12 @@ class TrizAgent:
     LLM 输出 thought + action，Agent 执行 action，结果加入记忆，循环继续。
     """
 
-    def __init__(self, skill_registry: AgentSkillRegistry | None = None,
-                 tool_registry=None, callback=None):
+    def __init__(
+        self,
+        skill_registry: AgentSkillRegistry | None = None,
+        tool_registry: Any | None = None,
+        callback: Callable[[str, dict], None] | None = None,
+    ):
         self.skill_registry = skill_registry or AgentSkillRegistry()
         self.tool_registry = tool_registry
         self.callback = callback
@@ -53,11 +60,11 @@ class TrizAgent:
             return agent_md.read_text(encoding="utf-8")
         return "你是 TRIZ 分析专家。"
 
-    def _notify(self, event_type: str, data: dict):
+    def _notify(self, event_type: str, data: dict) -> None:
         if self.callback:
             self.callback(event_type, data)
 
-    def run(self, question: str, history: list = None) -> str:
+    def run(self, question: str, history: list[dict[str, Any]] | None = None) -> str:
         """执行完整 TRIZ workflow。"""
         self.ctx = WorkflowContext(question=question, history=history or [])
         self.memory = []
@@ -80,7 +87,9 @@ class TrizAgent:
             action = decision["action"]
 
             if action["type"] == "clarify":
-                msg = self._generate_clarification(action.get("message", "需要补充信息"))
+                msg = self._generate_clarification(
+                    action.get("message", "需要补充信息")
+                )
                 self._notify("report", {"content": msg})
                 return msg
 
@@ -90,80 +99,109 @@ class TrizAgent:
             elif action["type"] in ("skill", "tool"):
                 name = action.get("name", "")
                 if not name:
-                    self.memory.append({
-                        "role": "system",
-                        "content": "错误：名称不能为空，请重新决策。",
-                    })
+                    self.memory.append(
+                        {
+                            "role": "system",
+                            "content": "错误：名称不能为空，请重新决策。",
+                        }
+                    )
                     continue
 
                 # 判断是 Skill 还是 Tool
-                is_tool = action["type"] == "tool" or (self.tool_registry and self.tool_registry.get(name))
+                is_tool = action["type"] == "tool" or (
+                    self.tool_registry and self.tool_registry.get(name)
+                )
                 step_type = "Tool" if is_tool else "Skill"
 
-                self._notify("step_start", {
-                    "step_name": name,
-                    "step_type": step_type,
-                    "agent_thought": decision.get("thought", ""),
-                })
+                self._notify(
+                    "step_start",
+                    {
+                        "step_name": name,
+                        "step_type": step_type,
+                        "agent_thought": decision.get("thought", ""),
+                    },
+                )
 
                 try:
                     if is_tool:
                         result = self._execute_tool(name)
                         # Tool 结果以可读文本加入记忆
                         tool_text = self._format_tool_result(name, result)
-                        self.memory.append({
-                            "role": "assistant",
-                            "skill": name,
-                            "thought": decision.get("thought", ""),
-                        })
-                        self.memory.append({
-                            "role": "system",
-                            "tool_result": name,
-                            "content": tool_text,
-                        })
+                        self.memory.append(
+                            {
+                                "role": "assistant",
+                                "skill": name,
+                                "thought": decision.get("thought", ""),
+                            }
+                        )
+                        self.memory.append(
+                            {
+                                "role": "system",
+                                "tool_result": name,
+                                "content": tool_text,
+                            }
+                        )
                     else:
                         markdown = self._execute_skill(name)
                         # Skill 的 Markdown 输出加入记忆
-                        self.memory.append({
-                            "role": "assistant",
-                            "skill": name,
-                            "thought": decision.get("thought", ""),
-                        })
-                        self.memory.append({
-                            "role": "system",
-                            "skill_result": name,
-                            "content": markdown,
-                        })
+                        self.memory.append(
+                            {
+                                "role": "assistant",
+                                "skill": name,
+                                "thought": decision.get("thought", ""),
+                            }
+                        )
+                        self.memory.append(
+                            {
+                                "role": "system",
+                                "skill_result": name,
+                                "content": markdown,
+                            }
+                        )
 
-                    self._notify("step_complete", {
-                        "step_name": name,
-                        "step_type": step_type,
-                        "result": result if is_tool else markdown,
-                    })
+                    self._notify(
+                        "step_complete",
+                        {
+                            "step_name": name,
+                            "step_type": step_type,
+                            "result": result if is_tool else markdown,
+                        },
+                    )
 
                 except Exception as e:
                     consecutive_errors[name] = consecutive_errors.get(name, 0) + 1
-                    err_msg = f"执行 {name} 出错 ({consecutive_errors[name]}/3): {str(e)}"
-                    self.memory.append({
-                        "role": "system",
-                        "content": err_msg,
-                    })
-                    self._notify("step_error", {
-                        "step_name": name,
-                        "error": str(e),
-                    })
-                    if consecutive_errors[name] >= 3:
-                        self.memory.append({
+                    err_msg = (
+                        f"执行 {name} 出错 ({consecutive_errors[name]}/3): {str(e)}"
+                    )
+                    self.memory.append(
+                        {
                             "role": "system",
-                            "content": f"{name} 连续失败 3 次，跳过此步骤。",
-                        })
+                            "content": err_msg,
+                        }
+                    )
+                    self._notify(
+                        "step_error",
+                        {
+                            "step_name": name,
+                            "error": str(e),
+                        },
+                    )
+                    if consecutive_errors[name] >= 3:
+                        self.memory.append(
+                            {
+                                "role": "system",
+                                "content": f"{name} 连续失败 3 次，跳过此步骤。",
+                            }
+                        )
                         consecutive_errors[name] = 0
 
             else:
-                self.memory.append({
-                    "role": "system",
-                    "content": f"未知的 action 类型: {action.get('type')}",
-                })
+                self.memory.append(
+                    {
+                        "role": "system",
+                        "content": f"未知的 action 类型: {action.get('type')}",
+                    }
+                )
 
         return self._generate_report()
 
@@ -238,12 +276,16 @@ class TrizAgent:
                     param_parts = []
                     for p_name, p_info in params.items():
                         req = "*" if p_name in required else ""
-                        param_parts.append(f"{p_name}{req}: {p_info.get('description', '')}")
+                        param_parts.append(
+                            f"{p_name}{req}: {p_info.get('description', '')}"
+                        )
                     lines.append(f"  参数: {', '.join(param_parts)}")
 
         lines.append("")
         lines.append("请思考当前状态，决定下一步行动。")
-        lines.append('输出 JSON: {"thought": "...", "action": {"type": "...", "name": "..."}}')
+        lines.append(
+            '输出 JSON: {"thought": "...", "action": {"type": "...", "name": "..."}}'
+        )
 
         return "\n".join(lines)
 
@@ -266,15 +308,19 @@ class TrizAgent:
             markdown = skill.execute(self.ctx, context_markdown)
             retry_warnings = skill.post_validate(markdown, self.ctx)
             if retry_warnings:
-                self.memory.append({
-                    "role": "system",
-                    "content": f"{name} 重试后仍有警告: {'; '.join(retry_warnings)}",
-                })
+                self.memory.append(
+                    {
+                        "role": "system",
+                        "content": f"{name} 重试后仍有警告: {'; '.join(retry_warnings)}",
+                    }
+                )
         elif warnings:
-            self.memory.append({
-                "role": "system",
-                "content": f"{name} 校验警告: {'; '.join(warnings)}",
-            })
+            self.memory.append(
+                {
+                    "role": "system",
+                    "content": f"{name} 校验警告: {'; '.join(warnings)}",
+                }
+            )
 
         return markdown
 
@@ -287,7 +333,7 @@ class TrizAgent:
             return self._execute_fos(tool_func)
         return tool_func(self.ctx)
 
-    def _execute_fos(self, search_patents_func) -> dict:
+    def _execute_fos(self, search_patents_func: Callable[..., Any]) -> dict:
         """执行 FOS 跨界检索。"""
         queries = self._generate_fos_queries()
         report = search_patents_func(
@@ -348,8 +394,12 @@ class TrizAgent:
             lines.append(f"\n检索到 {len(cases)} 条案例：")
             for i, c in enumerate(cases, 1):
                 if isinstance(c, dict):
-                    lines.append(f"{i}. **{c.get('title', '')}** (原理 {c.get('principle_id', '')})")
-                    lines.append(f"   来源: {c.get('source', '')} | 功能: {c.get('function', '')}")
+                    lines.append(
+                        f"{i}. **{c.get('title', '')}** (原理 {c.get('principle_id', '')})"
+                    )
+                    lines.append(
+                        f"   来源: {c.get('source', '')} | 功能: {c.get('function', '')}"
+                    )
                     lines.append(f"   描述: {c.get('description', '')}")
                 else:
                     lines.append(f"{i}. {c}")
@@ -364,7 +414,11 @@ class TrizAgent:
                         lines.append(f"{i}. **{r.get('title', '')}**")
                         lines.append(f"   摘要: {r.get('snippet', '')}")
 
-        if not cases and not (fos_report and isinstance(fos_report, dict) and fos_report.get("raw_results")):
+        if not cases and not (
+            fos_report
+            and isinstance(fos_report, dict)
+            and fos_report.get("raw_results")
+        ):
             lines.append("（未检索到相关案例）")
 
         return "\n".join(lines)
@@ -403,7 +457,9 @@ class TrizAgent:
             elif "tool_result" in mem:
                 analysis_parts.append(f"### {mem['tool_result']}\n{mem['content']}")
 
-        analysis_text = "\n\n".join(analysis_parts) if analysis_parts else "（无分析结果）"
+        analysis_text = (
+            "\n\n".join(analysis_parts) if analysis_parts else "（无分析结果）"
+        )
 
         system_prompt = (
             "你是 TRIZ 报告撰写专家。基于以下分析过程和结果，生成一份结构化的 TRIZ 解决方案报告。\n\n"

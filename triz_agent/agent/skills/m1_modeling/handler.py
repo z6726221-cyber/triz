@@ -1,4 +1,5 @@
 """M1 功能建模 Agent Skill：将用户问题拆解为功能模型，输出 Markdown。"""
+
 from triz_agent.agent.skills.base import AgentSkill
 from triz_agent.context import WorkflowContext
 

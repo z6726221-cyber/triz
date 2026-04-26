@@ -1,7 +1,10 @@
 import pytest
 import os
 from triz_pipeline.database.init_db import init_database, ensure_data_dir
-from triz_pipeline.database.queries import get_parameter_by_id, query_parameters_by_similarity
+from triz_pipeline.database.queries import (
+    get_parameter_by_id,
+    query_parameters_by_similarity,
+)
 from triz_pipeline.config import DB_PATH
 
 

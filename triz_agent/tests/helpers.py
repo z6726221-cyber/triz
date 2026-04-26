@@ -1,4 +1,5 @@
 """测试辅助函数。"""
+
 from triz_agent.context import WorkflowContext
 
 
@@ -14,7 +15,9 @@ def formulate_problem(ctx: WorkflowContext) -> dict:
     else:
         problem_type = "tech"
 
-    contradiction_desc = _extract_contradiction_desc(problem_type, root_param, key_problem)
+    contradiction_desc = _extract_contradiction_desc(
+        problem_type, root_param, key_problem
+    )
 
     return {
         "problem_type": problem_type,
@@ -23,7 +26,9 @@ def formulate_problem(ctx: WorkflowContext) -> dict:
     }
 
 
-def _extract_contradiction_desc(problem_type: str, root_param: str, key_problem: str) -> str:
+def _extract_contradiction_desc(
+    problem_type: str, root_param: str, key_problem: str
+) -> str:
     """从根因文本中提取矛盾描述。"""
     combined = f"{root_param} {key_problem}".strip()
 

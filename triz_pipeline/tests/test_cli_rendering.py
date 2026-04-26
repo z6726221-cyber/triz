@@ -1,10 +1,17 @@
 """CLI 渲染测试：验证 TRIZConsole 事件处理和命令行为。"""
+
 import pytest
 from unittest.mock import patch, MagicMock
 from rich.console import Console
 
-from triz_pipeline.cli import TRIZConsole
-from triz_pipeline.context import WorkflowContext, SAO, Solution, SolutionDraft, QualitativeTags
+from triz_pipeline.cli import TRIZPipelineConsole as TRIZConsole
+from triz_pipeline.context import (
+    WorkflowContext,
+    SAO,
+    Solution,
+    SolutionDraft,
+    QualitativeTags,
+)
 
 
 @pytest.fixture
@@ -26,6 +33,7 @@ def _make_ctx(**kwargs):
 # 事件渲染
 # ---------------------------------------------------------------------------
 
+
 def test_event_node_start(console):
     """node_start 事件应渲染节点 Panel。"""
     console._on_event("node_start", {"node_name": "问题建模", "current": 1, "total": 5})
@@ -38,7 +46,10 @@ def test_event_step_start_and_complete(console):
     """step_start 和 step_complete 应正确更新步骤状态。"""
     console._on_event("node_start", {"node_name": "矛盾求解", "current": 2, "total": 5})
     console._on_event("step_start", {"step_name": "m4_solver", "step_type": "Skill"})
-    console._on_event("step_complete", {"step_name": "m4_solver", "step_type": "Skill", "result": {"principles": [1]}})
+    console._on_event(
+        "step_complete",
+        {"step_name": "m4_solver", "step_type": "Skill", "result": {"principles": [1]}},
+    )
     output = console.console.export_text()
     assert "m4_solver" in output
 
@@ -47,7 +58,10 @@ def test_event_step_error(console):
     """step_error 事件应显示错误信息且不破坏布局。"""
     console._on_event("node_start", {"node_name": "矛盾求解", "current": 2, "total": 5})
     console._on_event("step_start", {"step_name": "m4_solver", "step_type": "Skill"})
-    console._on_event("step_error", {"step_name": "m4_solver", "step_type": "Skill", "error": "API timeout"})
+    console._on_event(
+        "step_error",
+        {"step_name": "m4_solver", "step_type": "Skill", "error": "API timeout"},
+    )
     output = console.console.export_text()
     assert "API timeout" in output
 
@@ -56,10 +70,14 @@ def test_event_m2_gate_skip(console):
     """M2 gate skip 应正确标记步骤为跳过，不崩溃。"""
     console._on_event("node_start", {"node_name": "问题建模", "current": 1, "total": 5})
     console._on_event("step_start", {"step_name": "m2_causal", "step_type": "Gate"})
-    console._on_event("step_complete", {
-        "step_name": "m2_causal", "step_type": "Gate",
-        "result": {"skipped": True, "reason": "无负面功能"}
-    })
+    console._on_event(
+        "step_complete",
+        {
+            "step_name": "m2_causal",
+            "step_type": "Gate",
+            "result": {"skipped": True, "reason": "无负面功能"},
+        },
+    )
     # 验证内部状态正确
     assert len(console._nodes) == 1
     steps = console._nodes[0]["steps"]
@@ -71,12 +89,16 @@ def test_event_node_complete_with_summary(console):
     """node_complete 带 ctx 时应渲染节点摘要。"""
     console._on_event("node_start", {"node_name": "问题建模", "current": 1, "total": 5})
     ctx = _make_ctx(
-        sao_list=[SAO(subject="刀片", action="切割", object="组织", function_type="useful")],
+        sao_list=[
+            SAO(subject="刀片", action="切割", object="组织", function_type="useful")
+        ],
         ifr="自动保持锋利",
         root_param="摩擦热",
-        contradiction_desc="既要快又要慢"
+        contradiction_desc="既要快又要慢",
     )
-    console._on_event("node_complete", {"node_name": "问题建模", "ctx": ctx, "outputs": []})
+    console._on_event(
+        "node_complete", {"node_name": "问题建模", "ctx": ctx, "outputs": []}
+    )
     output = console.console.export_text()
     assert "刀片" in output
     assert "摩擦热" in output
@@ -84,7 +106,9 @@ def test_event_node_complete_with_summary(console):
 
 def test_event_decision_terminate(console):
     """TERMINATE 决策应渲染为绿色成功样式。"""
-    console._on_event("decision", {"action": "TERMINATE", "reason": "信号已清空", "feedback": ""})
+    console._on_event(
+        "decision", {"action": "TERMINATE", "reason": "信号已清空", "feedback": ""}
+    )
     output = console.console.export_text()
     assert "TERMINATE" in output
     assert "信号已清空" in output
@@ -92,14 +116,18 @@ def test_event_decision_terminate(console):
 
 def test_event_decision_continue(console):
     """CONTINUE 决策应渲染为黄色循环样式。"""
-    console._on_event("decision", {"action": "CONTINUE", "reason": "需改进", "feedback": "试其他原理"})
+    console._on_event(
+        "decision", {"action": "CONTINUE", "reason": "需改进", "feedback": "试其他原理"}
+    )
     output = console.console.export_text()
     assert "CONTINUE" in output
 
 
 def test_event_decision_clarify(console):
     """CLARIFY 决策应渲染为红色问号样式。"""
-    console._on_event("decision", {"action": "CLARIFY", "reason": "信息不足", "feedback": ""})
+    console._on_event(
+        "decision", {"action": "CLARIFY", "reason": "信息不足", "feedback": ""}
+    )
     output = console.console.export_text()
     assert "CLARIFY" in output
 
@@ -117,11 +145,12 @@ def test_event_report_renders_markdown(console):
 # 命令处理
 # ---------------------------------------------------------------------------
 
+
 def test_cmd_save_report(tmp_path):
     """/save 命令应将报告写入文件。"""
     console = TRIZConsole()
     console.last_report = "# Test Report\n\nContent"
-    with patch.object(console.console, 'print'):
+    with patch.object(console.console, "print"):
         console._save_report(str(tmp_path / "test_report"))
     saved = tmp_path / "test_report.md"
     assert saved.exists()
@@ -140,12 +169,19 @@ def test_cmd_save_no_report(console):
 def test_cmd_show_existing_node(console):
     """/show 对已存在的节点应渲染详情。"""
     console.console = Console(record=True)
-    ctx = _make_ctx(sao_list=[SAO(subject="A", action="B", object="C", function_type="useful")])
-    console._nodes = [{
-        "node_name": "问题建模",
-        "current": 1, "total": 5, "status": "done",
-        "steps": [], "ctx": ctx,
-    }]
+    ctx = _make_ctx(
+        sao_list=[SAO(subject="A", action="B", object="C", function_type="useful")]
+    )
+    console._nodes = [
+        {
+            "node_name": "问题建模",
+            "current": 1,
+            "total": 5,
+            "status": "done",
+            "steps": [],
+            "ctx": ctx,
+        }
+    ]
     console._show_node("问题建模")
     output = console.console.export_text()
     assert "A" in output  # SAO 摘要中应包含 subject
@@ -171,8 +207,20 @@ def test_cmd_history_with_nodes(console):
     """/history 应渲染所有节点（紧凑模式）。"""
     console.console = Console(record=True)
     console._nodes = [
-        {"node_name": "问题建模", "current": 1, "total": 5, "status": "done", "steps": []},
-        {"node_name": "矛盾求解", "current": 2, "total": 5, "status": "done", "steps": []},
+        {
+            "node_name": "问题建模",
+            "current": 1,
+            "total": 5,
+            "status": "done",
+            "steps": [],
+        },
+        {
+            "node_name": "矛盾求解",
+            "current": 2,
+            "total": 5,
+            "status": "done",
+            "steps": [],
+        },
     ]
     console._show_history()
     output = console.console.export_text()
@@ -208,6 +256,7 @@ def test_cmd_exit_returns_true(console):
 # 长文本 / 边界
 # ---------------------------------------------------------------------------
 
+
 def test_long_text_report(console):
     """超长报告不应导致渲染溢出或异常。"""
     long_desc = "这是一个非常长的描述。" * 200
@@ -222,7 +271,9 @@ def test_empty_step_result(console):
     """步骤 result 为空 dict 时不应崩溃。"""
     console._on_event("node_start", {"node_name": "矛盾求解", "current": 2, "total": 5})
     console._on_event("step_start", {"step_name": "m4_solver", "step_type": "Skill"})
-    console._on_event("step_complete", {"step_name": "m4_solver", "step_type": "Skill", "result": {}})
+    console._on_event(
+        "step_complete", {"step_name": "m4_solver", "step_type": "Skill", "result": {}}
+    )
     # 验证内部状态正确（不崩溃即为通过）
     assert len(console._nodes) == 1
     steps = console._nodes[0]["steps"]

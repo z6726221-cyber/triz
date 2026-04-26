@@ -1,4 +1,5 @@
 """M3 问题定型 Skill：提取标准化的 TRIZ 矛盾对。"""
+
 from typing import Literal
 
 from pydantic import BaseModel
@@ -9,6 +10,7 @@ from triz_pipeline.context import WorkflowContext
 
 class M3Input(BaseModel):
     """M3 Skill 输入。"""
+
     root_param: str
     key_problem: str
     candidate_attributes: list[str]
@@ -16,6 +18,7 @@ class M3Input(BaseModel):
 
 class M3Output(BaseModel):
     """M3 Skill 输出。"""
+
     problem_type: Literal["tech", "phys"]
     improve_aspect: str
     worsen_aspect: str
@@ -61,9 +64,13 @@ class M3FormulationSkill(Skill[M3Input, M3Output]):
     def post_validate(self, output: M3Output, ctx: WorkflowContext) -> list[str]:
         warnings = []
         if output.problem_type not in ("tech", "phys"):
-            warnings.append(f"problem_type 非法: {output.problem_type}，应为 tech 或 phys")
+            warnings.append(
+                f"problem_type 非法: {output.problem_type}，应为 tech 或 phys"
+            )
         if len(output.improve_aspect) < 2 or len(output.improve_aspect) > 20:
-            warnings.append(f"improve_aspect 长度异常: {len(output.improve_aspect)} 字符")
+            warnings.append(
+                f"improve_aspect 长度异常: {len(output.improve_aspect)} 字符"
+            )
         if len(output.worsen_aspect) < 2 or len(output.worsen_aspect) > 20:
             warnings.append(f"worsen_aspect 长度异常: {len(output.worsen_aspect)} 字符")
         return warnings

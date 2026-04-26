@@ -10,7 +10,7 @@ def test_openai_client_initialization():
 
 def test_openai_client_chat_mock():
     client = OpenAIClient(api_key="test-key", model="gpt-4o-mini")
-    with patch.object(client.client.chat.completions, 'create') as mock_create:
+    with patch.object(client.client.chat.completions, "create") as mock_create:
         mock_create.return_value = MagicMock(
             choices=[MagicMock(message=MagicMock(content='{"test": true}'))]
         )

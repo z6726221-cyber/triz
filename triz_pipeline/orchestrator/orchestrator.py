@@ -1,13 +1,31 @@
 """编排器核心：持有 WorkflowContext，按序调用 Skill/Tool，支持回调通知。"""
-import time
 
-from triz_pipeline.context import WorkflowContext, ConvergenceDecision, SAO, SolutionDraft, Solution, Case, QualitativeTags
+import time
+from collections.abc import Callable
+from typing import Any
+
+from triz_pipeline.context import (
+    WorkflowContext,
+    ConvergenceDecision,
+    SAO,
+    SolutionDraft,
+    Solution,
+    Case,
+    QualitativeTags,
+)
 from triz_pipeline.tools.registry import register_default_tools
 from triz_pipeline.skills.registry import SkillRegistry
 from triz_pipeline.tools.m2_gate import should_trigger_m2
 from triz_pipeline.tools.m7_convergence import check_convergence
 from triz_pipeline.utils.markdown_renderer import render_final_report
-from triz_pipeline.config import MODEL_M1, MODEL_M2, MODEL_M3, MODEL_M4, MODEL_M5, MODEL_M6
+from triz_pipeline.config import (
+    MODEL_M1,
+    MODEL_M2,
+    MODEL_M3,
+    MODEL_M4,
+    MODEL_M5,
+    MODEL_M6,
+)
 from triz_pipeline.tools.input_classifier import classify_input
 
 
@@ -24,8 +42,8 @@ class Orchestrator:
     - report:      {content} (最终报告或中断消息)
     """
 
-    def __init__(self, callback=None):
-        self.output_buffer = []
+    def __init__(self, callback: Callable[[str, dict], None] | None = None):
+        self.output_buffer: list[dict[str, Any]] = []
         self.tool_registry = register_default_tools()
         self.skill_registry = SkillRegistry(tool_registry=self.tool_registry)
         self.callback = callback
@@ -71,11 +89,13 @@ class Orchestrator:
             priority=1,
         )
 
-    def _notify(self, event_type: str, data: dict):
+    def _notify(self, event_type: str, data: dict) -> None:
         if self.callback:
             self.callback(event_type, data)
 
-    def run_workflow(self, question: str, history: list = None):
+    def run_workflow(
+        self, question: str, history: list[dict[str, Any]] | None = None
+    ) -> str:
         """执行完整 TRIZ workflow，通过回调通知 UI 更新。
 
         返回最终的 Markdown 报告字符串（供 /save 使用）。
@@ -122,15 +142,28 @@ class Orchestrator:
 
             if not ctx.solution_drafts:
                 # Fallback: 基于已获取的原理和案例构造默认方案
-                fallback_output = self._try_fallback("m5_generation", Exception("empty solution_drafts"), ctx)
+                fallback_output = self._try_fallback(
+                    "m5_generation", Exception("empty solution_drafts"), ctx
+                )
                 if fallback_output and fallback_output.get("solution_drafts"):
                     from triz_pipeline.context import SolutionDraft
-                    drafts = [SolutionDraft.model_validate(d) for d in fallback_output["solution_drafts"]]
+
+                    drafts = [
+                        SolutionDraft.model_validate(d)
+                        for d in fallback_output["solution_drafts"]
+                    ]
                     ctx = ctx.model_copy(update={"solution_drafts": drafts})
-                    self._notify("step_complete", {
-                        "step_name": "m5_generation", "step_type": "Skill",
-                        "result": {"solution_drafts": fallback_output["solution_drafts"], "fallback": True}
-                    })
+                    self._notify(
+                        "step_complete",
+                        {
+                            "step_name": "m5_generation",
+                            "step_type": "Skill",
+                            "result": {
+                                "solution_drafts": fallback_output["solution_drafts"],
+                                "fallback": True,
+                            },
+                        },
+                    )
                 else:
                     msg = self._generate_fallback("未能生成有效方案")
                     self._notify("report", {"content": msg})
@@ -144,11 +177,14 @@ class Orchestrator:
 
             # 收敛控制
             decision = check_convergence(ctx)
-            self._notify("decision", {
-                "action": decision.action,
-                "reason": decision.reason,
-                "feedback": decision.feedback,
-            })
+            self._notify(
+                "decision",
+                {
+                    "action": decision.action,
+                    "reason": decision.reason,
+                    "feedback": decision.feedback,
+                },
+            )
 
             if decision.action == "TERMINATE":
                 contradiction = ctx.contradiction_desc or "未识别矛盾"
@@ -176,10 +212,18 @@ class Orchestrator:
                 ctx.max_ideality = 0.0
                 ctx.unresolved_signals = []
 
-    def _execute_node(self, node_name: str, current: int, total: int,
-                      ctx: WorkflowContext, steps: list) -> WorkflowContext:
+    def _execute_node(
+        self,
+        node_name: str,
+        current: int,
+        total: int,
+        ctx: WorkflowContext,
+        steps: list,
+    ) -> WorkflowContext:
         """执行一个用户可见节点，通过回调通知 UI。"""
-        self._notify("node_start", {"node_name": node_name, "current": current, "total": total})
+        self._notify(
+            "node_start", {"node_name": node_name, "current": current, "total": total}
+        )
         node_start_time = time.time()
         node_outputs = []
 
@@ -194,10 +238,14 @@ class Orchestrator:
             if step_name == "m2_causal":
                 if not should_trigger_m2(ctx):
                     node_outputs.append({"type": "gate_skip", "reason": "无负面功能"})
-                    self._notify("step_complete", {
-                        "step_name": step_name, "step_type": "Gate",
-                        "result": {"skipped": True, "reason": "无负面功能"}
-                    })
+                    self._notify(
+                        "step_complete",
+                        {
+                            "step_name": step_name,
+                            "step_type": "Gate",
+                            "result": {"skipped": True, "reason": "无负面功能"},
+                        },
+                    )
                     continue
 
             self._notify("step_start", {"step_name": step_name, "step_type": step_type})
@@ -212,9 +260,10 @@ class Orchestrator:
                         func = self._resolve_tool(step_name)
                     result = func(ctx)
             except Exception as e:
-                self._notify("step_error", {
-                    "step_name": step_name, "step_type": step_type, "error": str(e)
-                })
+                self._notify(
+                    "step_error",
+                    {"step_name": step_name, "step_type": step_type, "error": str(e)},
+                )
                 # 尝试 Skill fallback
                 result = self._try_fallback(step_name, e, ctx) or {}
 
@@ -223,13 +272,24 @@ class Orchestrator:
                 result = {"cases": result}
 
             ctx = self._merge_result(ctx, result)
-            self._notify("step_complete", {
-                "step_name": step_name, "step_type": step_type, "result": result
-            })
-            node_outputs.append({"step_name": step_name, "step_type": step_type, "result": result})
+            self._notify(
+                "step_complete",
+                {"step_name": step_name, "step_type": step_type, "result": result},
+            )
+            node_outputs.append(
+                {"step_name": step_name, "step_type": step_type, "result": result}
+            )
 
         elapsed = time.time() - node_start_time
-        self._notify("node_complete", {"node_name": node_name, "ctx": ctx, "outputs": node_outputs, "elapsed_seconds": elapsed})
+        self._notify(
+            "node_complete",
+            {
+                "node_name": node_name,
+                "ctx": ctx,
+                "outputs": node_outputs,
+                "elapsed_seconds": elapsed,
+            },
+        )
         return ctx
 
     def _run_skill(self, step_name: str, ctx: WorkflowContext) -> dict:
@@ -247,12 +307,12 @@ class Orchestrator:
         # Pydantic 模型 → dict
         return output.model_dump() if hasattr(output, "model_dump") else output
 
-    def _resolve_tool(self, name: str):
+    def _resolve_tool(self, name: str) -> Callable[[WorkflowContext], dict]:
         """按名称查找 Tool 函数。"""
         func = self.tool_registry.get(name)
         return func if func else lambda ctx: {}
 
-    def _build_skill_input(self, skill, ctx: WorkflowContext):
+    def _build_skill_input(self, skill: Any, ctx: WorkflowContext) -> Any:
         """从 WorkflowContext 提取 Skill 输入模型所需的字段。"""
         from pydantic import BaseModel
 
@@ -262,7 +322,9 @@ class Orchestrator:
                 input_data[field_name] = getattr(ctx, field_name)
         return skill.input_schema(**input_data)
 
-    def _try_fallback(self, step_name: str, error: Exception, ctx: WorkflowContext) -> dict | None:
+    def _try_fallback(
+        self, step_name: str, error: Exception, ctx: WorkflowContext
+    ) -> dict | None:
         """尝试调用 Skill 的 fallback 方法。"""
         skill = self.skill_registry.get(step_name)
         if skill is None:
@@ -272,7 +334,11 @@ class Orchestrator:
             input_data = self._build_skill_input(skill, ctx)
             fallback_output = skill.fallback(input_data, error, ctx)
             if fallback_output is not None:
-                return fallback_output.model_dump() if hasattr(fallback_output, "model_dump") else fallback_output
+                return (
+                    fallback_output.model_dump()
+                    if hasattr(fallback_output, "model_dump")
+                    else fallback_output
+                )
         except Exception:
             pass
         return None
@@ -295,10 +361,15 @@ class Orchestrator:
                 ]
             elif key == "fos_report" and isinstance(value, dict):
                 from triz_pipeline.context import FOSReport
+
                 value = FOSReport.model_validate(value)
             elif key == "solution_drafts" and isinstance(value, list):
                 value = [
-                    SolutionDraft.model_validate(item) if isinstance(item, dict) else item
+                    (
+                        SolutionDraft.model_validate(item)
+                        if isinstance(item, dict)
+                        else item
+                    )
                     for item in value
                 ]
             elif key == "ranked_solutions" and isinstance(value, list):
@@ -320,15 +391,26 @@ class Orchestrator:
                                 innovation_score=item.get("innovation_score", 3),
                                 uniqueness_score=item.get("uniqueness_score", 3),
                                 risk_level=item.get("risk_level", "medium"),
-                                ifr_deviation_reason=item.get("ifr_deviation_reason", ""),
-                                problem_relevance_score=item.get("problem_relevance_score", 3),
-                                logical_consistency_score=item.get("logical_consistency_score", 3),
+                                ifr_deviation_reason=item.get(
+                                    "ifr_deviation_reason", ""
+                                ),
+                                problem_relevance_score=item.get(
+                                    "problem_relevance_score", 3
+                                ),
+                                logical_consistency_score=item.get(
+                                    "logical_consistency_score", 3
+                                ),
                             )
-                            converted.append(Solution(
-                                draft=draft, tags=tags,
-                                ideality_score=item.get("ideality_score", 0.5),
-                                evaluation_rationale=item.get("evaluation_rationale", ""),
-                            ))
+                            converted.append(
+                                Solution(
+                                    draft=draft,
+                                    tags=tags,
+                                    ideality_score=item.get("ideality_score", 0.5),
+                                    evaluation_rationale=item.get(
+                                        "evaluation_rationale", ""
+                                    ),
+                                )
+                            )
                     else:
                         converted.append(item)
                 value = converted
@@ -341,4 +423,3 @@ class Orchestrator:
 
     def _generate_fallback(self, reason: str) -> str:
         return f"**流程中断**：{reason}\n\n建议：尝试用更具体的工程语言描述问题，或提供更多技术细节。"
-

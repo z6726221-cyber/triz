@@ -1,4 +1,5 @@
 """M2 根因分析 Skill：从负面功能出发执行 RCA+因果链分析。"""
+
 from pydantic import BaseModel
 
 from triz_pipeline.skills.base import Skill
@@ -7,11 +8,13 @@ from triz_pipeline.context import WorkflowContext, SAO
 
 class M2Input(BaseModel):
     """M2 Skill 输入。"""
+
     sao_list: list[SAO]
 
 
 class M2Output(BaseModel):
     """M2 Skill 输出。"""
+
     root_param: str
     key_problem: str
     candidate_attributes: list[str]
@@ -44,9 +47,15 @@ class M2CausalSkill(Skill[M2Input, M2Output]):
         raw = self._parse_json(response)
         return self.validate_output(raw)
 
-    def fallback(self, input_data: M2Input, error: Exception, ctx: WorkflowContext) -> M2Output:
+    def fallback(
+        self, input_data: M2Input, error: Exception, ctx: WorkflowContext
+    ) -> M2Output:
         """降级策略：基于第一个负面 SAO 构造简化结果。"""
-        harmful_saos = [s for s in input_data.sao_list if s.function_type in ("harmful", "insufficient")]
+        harmful_saos = [
+            s
+            for s in input_data.sao_list
+            if s.function_type in ("harmful", "insufficient")
+        ]
         if not harmful_saos:
             harmful_saos = input_data.sao_list
 
@@ -68,5 +77,7 @@ class M2CausalSkill(Skill[M2Input, M2Output]):
         """构建 M2 user prompt。"""
         lines = ["功能模型（SAO）："]
         for sao in data.sao_list:
-            lines.append(f"  - [{sao.function_type}] {sao.subject} {sao.action} {sao.object}")
+            lines.append(
+                f"  - [{sao.function_type}] {sao.subject} {sao.action} {sao.object}"
+            )
         return "\n".join(lines)

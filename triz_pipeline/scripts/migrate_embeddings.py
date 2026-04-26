@@ -2,9 +2,11 @@
 
 用法: python scripts/migrate_embeddings.py
 """
+
 import sys
 import json
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
 
 import sqlite3
 from triz_pipeline.config import DB_PATH
@@ -16,7 +18,10 @@ def migrate():
     # 1. 加载模型
     print("加载 sentence-transformers 模型...")
     from sentence_transformers import SentenceTransformer
-    model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2", local_files_only=True)
+
+    model = SentenceTransformer(
+        "paraphrase-multilingual-MiniLM-L12-v2", local_files_only=True
+    )
     print(f"模型加载完成，维度: {model.get_sentence_embedding_dimension()}")
 
     # 2. 读取参数
@@ -35,7 +40,7 @@ def migrate():
 
         cursor.execute(
             "UPDATE parameters SET embedding_json = ? WHERE id = ?",
-            (embedding_json, pid)
+            (embedding_json, pid),
         )
         updated += 1
         print(f"  [{pid:2d}] {name_cn}: 维度 {len(embedding)}")

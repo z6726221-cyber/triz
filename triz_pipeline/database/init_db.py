@@ -1,9 +1,15 @@
 """数据库初始化：建表、插入TRIZ标准数据"""
+
 import sqlite3
 import json
 from pathlib import Path
 from triz_pipeline.config import DB_PATH, DATA_DIR
-from triz_pipeline.database.triz_data import get_parameters, get_principles, get_separation_rules, MATRIX
+from triz_pipeline.database.triz_data import (
+    get_parameters,
+    get_principles,
+    get_separation_rules,
+    MATRIX,
+)
 
 
 def ensure_data_dir():
@@ -69,7 +75,7 @@ def init_database():
         for p in get_parameters():
             cursor.execute(
                 "INSERT INTO parameters (id, name, name_cn, description, embedding_json) VALUES (?, ?, ?, ?, ?)",
-                (p["id"], p["name"], p["name_cn"], p["description"], None)
+                (p["id"], p["name"], p["name_cn"], p["description"], None),
             )
 
     cursor.execute("SELECT COUNT(*) FROM principles")
@@ -77,7 +83,7 @@ def init_database():
         for p in get_principles():
             cursor.execute(
                 "INSERT INTO principles (id, name, name_cn, description) VALUES (?, ?, ?, ?)",
-                (p["id"], p["name"], p["name_cn"], p["description"])
+                (p["id"], p["name"], p["name_cn"], p["description"]),
             )
 
     cursor.execute("SELECT COUNT(*) FROM matrix")
@@ -85,7 +91,7 @@ def init_database():
         for (imp, wor), prins in MATRIX.items():
             cursor.execute(
                 "INSERT INTO matrix (improve_param, worsen_param, principles) VALUES (?, ?, ?)",
-                (imp, wor, json.dumps(prins))
+                (imp, wor, json.dumps(prins)),
             )
 
     cursor.execute("SELECT COUNT(*) FROM separation_rules")
@@ -93,22 +99,57 @@ def init_database():
         for r in get_separation_rules():
             cursor.execute(
                 "INSERT INTO separation_rules (id, type, condition, principles) VALUES (?, ?, ?, ?)",
-                (r["id"], r["type"], r["condition"], json.dumps(r["principles"]))
+                (r["id"], r["type"], r["condition"], json.dumps(r["principles"])),
             )
 
     cursor.execute("SELECT COUNT(*) FROM cases")
     if cursor.fetchone()[0] == 0:
         sample_cases = [
-            (15, "切割", "医疗", "本地库", "手术刀动态压力调节", "根据组织密度实时调整刀片接触压力"),
-            (28, "切割", "医疗", "本地库", "超声波手术刀", "使用超声波振动代替机械切割"),
-            (1, "固定", "医疗", "本地库", "可拆卸手术支架", "将支架分成多个独立部分便于取出"),
-            (35, "加热", "航天", "本地库", "航天器温控涂层", "根据日照角度改变涂层颜色调节温度"),
-            (14, "支撑", "汽车", "本地库", "F1赛车悬挂", "用曲面结构分散冲击力提高强度"),
+            (
+                15,
+                "切割",
+                "医疗",
+                "本地库",
+                "手术刀动态压力调节",
+                "根据组织密度实时调整刀片接触压力",
+            ),
+            (
+                28,
+                "切割",
+                "医疗",
+                "本地库",
+                "超声波手术刀",
+                "使用超声波振动代替机械切割",
+            ),
+            (
+                1,
+                "固定",
+                "医疗",
+                "本地库",
+                "可拆卸手术支架",
+                "将支架分成多个独立部分便于取出",
+            ),
+            (
+                35,
+                "加热",
+                "航天",
+                "本地库",
+                "航天器温控涂层",
+                "根据日照角度改变涂层颜色调节温度",
+            ),
+            (
+                14,
+                "支撑",
+                "汽车",
+                "本地库",
+                "F1赛车悬挂",
+                "用曲面结构分散冲击力提高强度",
+            ),
         ]
         for case in sample_cases:
             cursor.execute(
                 "INSERT INTO cases (principle_id, function, context, source, title, description) VALUES (?, ?, ?, ?, ?, ?)",
-                case
+                case,
             )
 
     conn.commit()

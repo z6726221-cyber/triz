@@ -1,6 +1,13 @@
 import pytest
 import os
-from triz_pipeline.context import WorkflowContext, SAO, ConvergenceDecision, Solution, SolutionDraft, QualitativeTags
+from triz_pipeline.context import (
+    WorkflowContext,
+    SAO,
+    ConvergenceDecision,
+    Solution,
+    SolutionDraft,
+    QualitativeTags,
+)
 from tests.helpers import formulate_problem
 from triz_pipeline.tools.m7_convergence import check_convergence
 from triz_pipeline.tools.m2_gate import should_trigger_m2
@@ -34,16 +41,21 @@ def _make_solution(relevance=5, consistency=5, ideality=0.7):
 
 # --- M3 问题定型 ---
 
+
 def test_formulate_tech_contradiction():
     ctx = WorkflowContext(question="test")
     ctx.root_param = "刀片磨损太快"
     ctx.key_problem = "摩擦热量过高导致接触面积问题"
     ctx.candidate_attributes = ["接触面积", "摩擦热"]
-    ctx.sao_list = [SAO(subject="刀片", action="切割", object="组织", function_type="useful")]
+    ctx.sao_list = [
+        SAO(subject="刀片", action="切割", object="组织", function_type="useful")
+    ]
 
     result = formulate_problem(ctx)
     assert result["problem_type"] == "tech"
-    assert "磨损" in result["contradiction_desc"] or "摩擦" in result["contradiction_desc"]
+    assert (
+        "磨损" in result["contradiction_desc"] or "摩擦" in result["contradiction_desc"]
+    )
 
 
 def test_formulate_phys_contradiction():
@@ -55,7 +67,9 @@ def test_formulate_phys_contradiction():
 
     result = formulate_problem(ctx)
     assert result["problem_type"] == "phys"
-    assert "既要" in result["contradiction_desc"] or "大" in result["contradiction_desc"]
+    assert (
+        "既要" in result["contradiction_desc"] or "大" in result["contradiction_desc"]
+    )
 
 
 def test_formulate_fallback():
@@ -67,10 +81,14 @@ def test_formulate_fallback():
 
     result = formulate_problem(ctx)
     assert result["problem_type"] == "tech"
-    assert result["contradiction_desc"] == "" or result["contradiction_desc"] == "未识别矛盾"
+    assert (
+        result["contradiction_desc"] == ""
+        or result["contradiction_desc"] == "未识别矛盾"
+    )
 
 
 # --- M7 收敛控制 ---
+
 
 def test_convergence_terminate_signals_cleared():
     ctx = WorkflowContext(question="test")
@@ -128,7 +146,11 @@ def test_convergence_max_iterations():
     ctx.max_ideality = 0.7
     ctx.iteration = 5
     ctx.unresolved_signals = ["风险过高"]
-    ctx.history_log = [{"max_ideality": 0.6}, {"max_ideality": 0.65}, {"max_ideality": 0.7}]
+    ctx.history_log = [
+        {"max_ideality": 0.6},
+        {"max_ideality": 0.65},
+        {"max_ideality": 0.7},
+    ]
     ctx.ranked_solutions = [_make_solution(relevance=5, consistency=5, ideality=0.7)]
 
     decision = check_convergence(ctx)
@@ -165,9 +187,12 @@ def test_convergence_low_consistency_continue():
 
 # --- M2 门控 ---
 
+
 def test_m2_gate_trigger_with_harmful_sao():
     ctx = WorkflowContext(question="test")
-    ctx.sao_list = [SAO(subject="A", action="损坏", object="B", function_type="harmful")]
+    ctx.sao_list = [
+        SAO(subject="A", action="损坏", object="B", function_type="harmful")
+    ]
     assert should_trigger_m2(ctx) is True
 
 
@@ -179,6 +204,7 @@ def test_m2_gate_skip_all_useful():
 
 # --- FOS 跨界检索 ---
 
+
 @pytest.fixture(scope="module", autouse=True)
 def setup_db(tmp_path_factory):
     """初始化测试数据库（模块级）。"""
@@ -186,9 +212,10 @@ def setup_db(tmp_path_factory):
     import triz_pipeline.config
     import triz_pipeline.database.init_db
     import triz_pipeline.database.queries
-    triz.config.DB_PATH = db_path
-    triz.database.init_db.DB_PATH = db_path
-    triz.database.queries.DB_PATH = db_path
+
+    triz_pipeline.config.DB_PATH = db_path
+    triz_pipeline.database.init_db.DB_PATH = db_path
+    triz_pipeline.database.queries.DB_PATH = db_path
     init_database()
     yield db_path
     if db_path.exists():
@@ -200,16 +227,25 @@ def test_search_local_cases(monkeypatch):
 
     def mock_search_serpapi(query, num=5):
         return [
-            SearchResult(title="Test Patent", snippet="test snippet", source="Google Patents", query=query),
+            SearchResult(
+                title="Test Patent",
+                snippet="test snippet",
+                source="Google Patents",
+                query=query,
+            ),
         ]
 
-    monkeypatch.setattr("triz_pipeline.tools.fos_search._search_serpapi", mock_search_serpapi)
+    monkeypatch.setattr(
+        "triz_pipeline.tools.fos_search._search_serpapi", mock_search_serpapi
+    )
     monkeypatch.setattr("triz_pipeline.tools.fos_search._get_cache", lambda q: None)
     monkeypatch.setattr("triz_pipeline.tools.fos_search._set_cache", lambda q, r: None)
 
     ctx = WorkflowContext(question="如何提高手术刀片耐用性")
     ctx.principles = [15, 28]
-    ctx.sao_list = [SAO(subject="刀片", action="切割", object="组织", function_type="useful")]
+    ctx.sao_list = [
+        SAO(subject="刀片", action="切割", object="组织", function_type="useful")
+    ]
 
     cases = search_cases(ctx)
     assert len(cases) > 0

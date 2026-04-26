@@ -1,4 +1,5 @@
 """M1 功能建模 Skill：将用户问题拆解为结构化的功能模型。"""
+
 from pydantic import BaseModel
 
 from triz_pipeline.skills.base import Skill
@@ -7,11 +8,13 @@ from triz_pipeline.context import WorkflowContext, SAO
 
 class M1Input(BaseModel):
     """M1 Skill 输入。"""
+
     question: str
 
 
 class M1Output(BaseModel):
     """M1 Skill 输出。"""
+
     sao_list: list[SAO]
     resources: dict[str, list[str]]
     ifr: str

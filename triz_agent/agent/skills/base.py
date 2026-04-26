@@ -1,4 +1,5 @@
 """Agent Skill 基类：极简设计，输出 Markdown，保留 gotchas/post_validate/渐进式披露。"""
+
 import inspect
 import re
 from abc import ABC, abstractmethod
@@ -66,7 +67,7 @@ class AgentSkill(ABC):
 
         content = skill_md.read_text(encoding="utf-8")
         match = _FRONTMATTER_RE.match(content)
-        prompt = content[match.end():].strip() if match else content
+        prompt = content[match.end() :].strip() if match else content
 
         if self._retry_hints:
             prompt += "\n\n## 校验警告（上次执行的问题，请特别注意）\n"

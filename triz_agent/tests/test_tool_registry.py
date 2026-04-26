@@ -22,7 +22,7 @@ def test_register_and_execute():
                 },
                 "required": ["a", "b"],
             },
-        }
+        },
     )
 
     schemas = registry.get_schemas()

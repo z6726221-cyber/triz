@@ -19,6 +19,7 @@ class Case(BaseModel):
 
 class SearchResult(BaseModel):
     """单条搜索结果（来自 SerpApi 或缓存）。"""
+
     title: str
     snippet: str
     url: str = ""
@@ -28,6 +29,7 @@ class SearchResult(BaseModel):
 
 class FOSReport(BaseModel):
     """FOS 返回的结构化报告。"""
+
     cases: list[Case] = []
     raw_results: list[SearchResult] = []
     queries_used: list[str] = []
@@ -43,21 +45,21 @@ class SolutionDraft(BaseModel):
 
 
 class QualitativeTags(BaseModel):
-    feasibility_score: int              # 1-5
-    resource_fit_score: int             # 1-5
-    innovation_score: int               # 1-5
-    uniqueness_score: int               # 1-5
+    feasibility_score: int  # 1-5
+    resource_fit_score: int  # 1-5
+    innovation_score: int  # 1-5
+    uniqueness_score: int  # 1-5
     risk_level: Literal["low", "medium", "high", "critical"]
     ifr_deviation_reason: str
-    problem_relevance_score: int = 3     # 1-5: 方案与用户问题的匹配度
-    logical_consistency_score: int = 3   # 1-5: 方案描述是否自洽
+    problem_relevance_score: int = 3  # 1-5: 方案与用户问题的匹配度
+    logical_consistency_score: int = 3  # 1-5: 方案描述是否自洽
 
 
 class Solution(BaseModel):
     draft: SolutionDraft
     tags: QualitativeTags
-    ideality_score: float       # LLM 综合评分（0-1）
-    evaluation_rationale: str   # 评分依据说明
+    ideality_score: float  # LLM 综合评分（0-1）
+    evaluation_rationale: str  # 评分依据说明
 
 
 class WorkflowContext(BaseModel):
@@ -78,10 +80,10 @@ class WorkflowContext(BaseModel):
 
     # M3 输出
     problem_type: Optional[Literal["tech", "phys"]] = None
-    improve_aspect: Optional[str] = None   # 需要改善的方面
-    worsen_aspect: Optional[str] = None    # 随之恶化的方面
+    improve_aspect: Optional[str] = None  # 需要改善的方面
+    worsen_aspect: Optional[str] = None  # 随之恶化的方面
     contradiction_desc: str = ""  # 矛盾自然语言描述（兼容旧逻辑）
-    evidence: List[str] = []      # 矛盾判定的支持证据（来自因果链）
+    evidence: List[str] = []  # 矛盾判定的支持证据（来自因果链）
 
     # M4 输出
     principles: List[int] = []

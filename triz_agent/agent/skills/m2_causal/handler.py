@@ -1,4 +1,5 @@
 """M2 根因分析 Agent Skill：从负面功能出发执行 RCA+因果链分析，输出 Markdown。"""
+
 from triz_agent.agent.skills.base import AgentSkill
 from triz_agent.context import WorkflowContext
 

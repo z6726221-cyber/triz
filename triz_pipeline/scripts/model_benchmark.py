@@ -7,6 +7,7 @@
 4. 推理能力 — 因果推理、评分区分度
 5. 延迟 — 首 token 时间 + 总耗时
 """
+
 import json
 import time
 import sys
@@ -51,11 +52,10 @@ TESTS = [
         "schema": {
             "sao_list": "list[dict] with keys: subject, action, object, function_type",
             "resources": "dict with 6 keys",
-            "ifr": "str"
+            "ifr": "str",
         },
         "temperature": 0.1,
     },
-
     # ── Test 2: JSON 模式 (M5 难度 - 复杂嵌套) ──
     {
         "name": "T2_JSON复杂",
@@ -81,12 +81,9 @@ TESTS = [
     }
   ]
 }""",
-        "schema": {
-            "solution_drafts": "list[dict] with 4 keys, description>=100 chars"
-        },
+        "schema": {"solution_drafts": "list[dict] with 4 keys, description>=100 chars"},
         "temperature": 0.4,
     },
-
     # ── Test 3: 因果推理 (M2) ──
     {
         "name": "T3_因果推理",
@@ -106,11 +103,10 @@ TESTS = [
         "schema": {
             "root_param": "str - 物理参数",
             "causal_chain": "list[str] - 3+ layers",
-            "candidate_attributes": "list[str] - 物理属性"
+            "candidate_attributes": "list[str] - 物理属性",
         },
         "temperature": 0.3,
     },
-
     # ── Test 4: 简洁结构化 (M3) ──
     {
         "name": "T4_简洁结构化",
@@ -131,11 +127,10 @@ TESTS = [
         "schema": {
             "problem_type": "str - 'tech' or 'phys'",
             "improve_desc": "str - 2-6 Chinese chars",
-            "worsen_desc": "str - 2-6 Chinese chars"
+            "worsen_desc": "str - 2-6 Chinese chars",
         },
         "temperature": 0.1,
     },
-
     # ── Test 5: 评分区分度 (M6) ──
     {
         "name": "T5_评分区分度",
@@ -166,12 +161,9 @@ TESTS = [
     }
   ]
 }""",
-        "schema": {
-            "ranked_solutions": "list[3 dicts] with 7 score fields"
-        },
+        "schema": {"ranked_solutions": "list[3 dicts] with 7 score fields"},
         "temperature": 0.3,
     },
-
     # ── Test 6: Agent 决策 (ReAct) ──
     {
         "name": "T6_Agent决策",
@@ -193,16 +185,14 @@ TESTS = [
 - 未完成：m3_formulation、m5_generation、m6_evaluation
 
 下一步应该做什么？""",
-        "schema": {
-            "thought": "str",
-            "action": "str - one of the skill names"
-        },
+        "schema": {"thought": "str", "action": "str - one of the skill names"},
         "temperature": 0.2,
     },
 ]
 
 
 # ── 评测引擎 ──────────────────────────────────────────────────────────
+
 
 def run_test(client: OpenAI, model_id: str, test: dict) -> dict:
     """运行单个测试，返回结果。"""
@@ -265,6 +255,7 @@ def _parse_json(text: str) -> dict | None:
         pass
     # 提取 ```json ... ``` 代码块
     import re
+
     m = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
     if m:
         try:
@@ -276,7 +267,7 @@ def _parse_json(text: str) -> dict | None:
     end = text.rfind("}")
     if start != -1 and end > start:
         try:
-            return json.loads(text[start:end + 1])
+            return json.loads(text[start : end + 1])
         except json.JSONDecodeError:
             pass
     return None
@@ -302,7 +293,8 @@ def _score_output(parsed: dict, test: dict) -> dict:
         valid_types = {"useful", "harmful", "excessive", "insufficient"}
         types_ok = all(
             s.get("function_type") in valid_types
-            for s in sao_list if isinstance(s, dict)
+            for s in sao_list
+            if isinstance(s, dict)
         )
         scores["type_validity"] = 5 if types_ok else 1
         # 资源完整性
@@ -329,11 +321,17 @@ def _score_output(parsed: dict, test: dict) -> dict:
         scores["root_param_present"] = 5 if parsed.get("root_param") else 0
 
     elif test["name"] == "T4_简洁结构化":
-        scores["problem_type_valid"] = 5 if parsed.get("problem_type") in ("tech", "phys") else 0
+        scores["problem_type_valid"] = (
+            5 if parsed.get("problem_type") in ("tech", "phys") else 0
+        )
         imp = parsed.get("improve_desc", "")
         wor = parsed.get("worsen_desc", "")
-        scores["improve_length"] = 5 if 2 <= len(imp) <= 6 else (3 if len(imp) <= 10 else 1)
-        scores["worsen_length"] = 5 if 2 <= len(wor) <= 6 else (3 if len(wor) <= 10 else 1)
+        scores["improve_length"] = (
+            5 if 2 <= len(imp) <= 6 else (3 if len(imp) <= 10 else 1)
+        )
+        scores["worsen_length"] = (
+            5 if 2 <= len(wor) <= 6 else (3 if len(wor) <= 10 else 1)
+        )
 
     elif test["name"] == "T5_评分区分度":
         solutions = parsed.get("ranked_solutions", [])
@@ -342,7 +340,8 @@ def _score_output(parsed: dict, test: dict) -> dict:
         if len(solutions) >= 2:
             feasibility_scores = [
                 s.get("tags", {}).get("feasibility_score", 0)
-                for s in solutions if isinstance(s, dict)
+                for s in solutions
+                if isinstance(s, dict)
             ]
             if feasibility_scores:
                 unique_scores = len(set(feasibility_scores))
@@ -354,7 +353,13 @@ def _score_output(parsed: dict, test: dict) -> dict:
 
     elif test["name"] == "T6_Agent决策":
         scores["has_thought"] = 5 if parsed.get("thought") else 0
-        valid_actions = {"m1_modeling", "m2_causal", "m3_formulation", "m5_generation", "m6_evaluation"}
+        valid_actions = {
+            "m1_modeling",
+            "m2_causal",
+            "m3_formulation",
+            "m5_generation",
+            "m6_evaluation",
+        }
         scores["valid_action"] = 5 if parsed.get("action") in valid_actions else 0
         # 检查是否选择了正确的下一步（m3_formulation）
         scores["correct_action"] = 5 if parsed.get("action") == "m3_formulation" else 1
@@ -363,6 +368,7 @@ def _score_output(parsed: dict, test: dict) -> dict:
 
 
 # ── 主程序 ──────────────────────────────────────────────────────────
+
 
 def main():
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
@@ -398,7 +404,9 @@ def main():
                 latency = result["latency_s"]
                 total_score = sum(result["scores"].values())
                 max_score = len(result["scores"]) * 5
-                print(f"JSON{json_ok} Schema{schema_ok} {latency}s 得分:{total_score}/{max_score}")
+                print(
+                    f"JSON{json_ok} Schema{schema_ok} {latency}s 得分:{total_score}/{max_score}"
+                )
 
     # ── 汇总报告 ──
     print(f"\n\n{'='*80}")
@@ -411,9 +419,12 @@ def main():
         mk = r["model"]
         if mk not in model_summary:
             model_summary[mk] = {
-                "json_pass": 0, "json_total": 0,
-                "schema_pass": 0, "schema_total": 0,
-                "total_score": 0, "max_score": 0,
+                "json_pass": 0,
+                "json_total": 0,
+                "schema_pass": 0,
+                "schema_total": 0,
+                "total_score": 0,
+                "max_score": 0,
                 "avg_latency": [],
                 "errors": 0,
             }
@@ -433,19 +444,30 @@ def main():
                 s["avg_latency"].append(r["latency_s"])
 
     # 打印表格
-    print(f"\n{'模型':<25} {'JSON合规':>8} {'Schema匹配':>10} {'质量得分':>8} {'平均延迟':>8} {'错误':>4}")
+    print(
+        f"\n{'模型':<25} {'JSON合规':>8} {'Schema匹配':>10} {'质量得分':>8} {'平均延迟':>8} {'错误':>4}"
+    )
     print("-" * 75)
 
     for mk, s in sorted(model_summary.items()):
         json_rate = f"{s['json_pass']}/{s['json_total']}"
         schema_rate = f"{s['schema_pass']}/{s['schema_total']}"
-        quality = f"{s['total_score']}/{s['max_score']}" if s['max_score'] > 0 else "N/A"
-        avg_lat = f"{sum(s['avg_latency'])/len(s['avg_latency']):.1f}s" if s['avg_latency'] else "N/A"
-        print(f"{mk:<25} {json_rate:>8} {schema_rate:>10} {quality:>8} {avg_lat:>8} {s['errors']:>4}")
+        quality = (
+            f"{s['total_score']}/{s['max_score']}" if s["max_score"] > 0 else "N/A"
+        )
+        avg_lat = (
+            f"{sum(s['avg_latency'])/len(s['avg_latency']):.1f}s"
+            if s["avg_latency"]
+            else "N/A"
+        )
+        print(
+            f"{mk:<25} {json_rate:>8} {schema_rate:>10} {quality:>8} {avg_lat:>8} {s['errors']:>4}"
+        )
 
     # 保存详细结果
     output_path = "scripts/reports/model_benchmark.json"
     import os
+
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(all_results, f, ensure_ascii=False, indent=2)

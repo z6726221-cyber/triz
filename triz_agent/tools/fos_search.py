@@ -4,6 +4,7 @@
 - search_patents(queries, principles) → 新接口，M5 驱动
 - search_cases(ctx) → 兼容旧接口，内部调用 search_patents
 """
+
 import hashlib
 import json
 import time
@@ -72,7 +73,7 @@ def search_patents(
     ]
 
     return FOSReport(
-        cases=cases[:limit_per_query * len(queries)],
+        cases=cases[: limit_per_query * len(queries)],
         raw_results=unique_results,
         queries_used=queries,
         cache_hits=cache_hits,
@@ -96,13 +97,15 @@ def _search_serpapi(query: str, num: int = 5) -> list[SearchResult]:
 
     cases = []
     for result in results.get("organic_results", [])[:num]:
-        cases.append(SearchResult(
-            title=result.get("title", "Unknown Patent"),
-            snippet=result.get("snippet", ""),
-            url=result.get("link", ""),
-            source="Google Patents",
-            query=query,
-        ))
+        cases.append(
+            SearchResult(
+                title=result.get("title", "Unknown Patent"),
+                snippet=result.get("snippet", ""),
+                url=result.get("link", ""),
+                source="Google Patents",
+                query=query,
+            )
+        )
     return cases
 
 
@@ -141,6 +144,7 @@ def _semantic_filter(
 
 # --- 缓存机制 ---
 
+
 def _get_cache_dir() -> Path:
     """获取缓存目录。"""
     cache_dir = Path(FOS_CACHE_DIR)
@@ -177,10 +181,13 @@ def _set_cache(query: str, results: list[SearchResult]):
         "timestamp": time.time(),
         "results": [r.model_dump() for r in results],
     }
-    cache_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    cache_file.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 # --- 兼容旧接口 ---
+
 
 def search_cases(ctx: WorkflowContext) -> list[Case]:
     """兼容旧接口：从 ctx 提取信息调用 search_patents。"""

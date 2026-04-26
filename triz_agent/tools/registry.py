@@ -1,4 +1,5 @@
 """Tool Registry：注册和管理可供 Skill 调用的 Tools。"""
+
 from typing import Callable, Any
 
 from triz_agent.tools.fos_search import search_patents
@@ -61,13 +62,23 @@ def register_default_tools() -> ToolRegistry:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "improve": {"type": "string", "description": "需要改善的方面（简短描述）"},
-                    "worsen": {"type": "string", "description": "随之恶化的方面（简短描述）"},
-                    "problem_type": {"type": "string", "enum": ["tech", "phys"], "description": "矛盾类型：tech=技术矛盾，phys=物理矛盾"},
+                    "improve": {
+                        "type": "string",
+                        "description": "需要改善的方面（简短描述）",
+                    },
+                    "worsen": {
+                        "type": "string",
+                        "description": "随之恶化的方面（简短描述）",
+                    },
+                    "problem_type": {
+                        "type": "string",
+                        "enum": ["tech", "phys"],
+                        "description": "矛盾类型：tech=技术矛盾，phys=物理矛盾",
+                    },
                 },
                 "required": ["improve", "worsen", "problem_type"],
             },
-        }
+        },
     )
     registry.register(
         name="search_patents",
@@ -78,13 +89,25 @@ def register_default_tools() -> ToolRegistry:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "queries": {"type": "array", "items": {"type": "string"}, "description": "搜索词列表（英文，3-8个关键词）"},
-                    "principles": {"type": "array", "items": {"type": "integer"}, "description": "发明原理编号列表"},
-                    "limit_per_query": {"type": "integer", "description": "每个搜索词返回的结果数量", "default": 5},
+                    "queries": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "搜索词列表（英文，3-8个关键词）",
+                    },
+                    "principles": {
+                        "type": "array",
+                        "items": {"type": "integer"},
+                        "description": "发明原理编号列表",
+                    },
+                    "limit_per_query": {
+                        "type": "integer",
+                        "description": "每个搜索词返回的结果数量",
+                        "default": 5,
+                    },
                 },
                 "required": ["queries", "principles"],
             },
-        }
+        },
     )
 
     # 底层 Tools（供 Skill 内部调用）
@@ -97,12 +120,18 @@ def register_default_tools() -> ToolRegistry:
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "improve_aspect": {"type": "string", "description": "需要改善的方面（2-6个中文词）"},
-                    "worsen_aspect": {"type": "string", "description": "随之恶化的方面（2-6个中文词）"},
+                    "improve_aspect": {
+                        "type": "string",
+                        "description": "需要改善的方面（2-6个中文词）",
+                    },
+                    "worsen_aspect": {
+                        "type": "string",
+                        "description": "随之恶化的方面（2-6个中文词）",
+                    },
                 },
                 "required": ["improve_aspect", "worsen_aspect"],
             },
-        }
+        },
     )
     registry.register(
         name="query_matrix",
@@ -118,7 +147,7 @@ def register_default_tools() -> ToolRegistry:
                 },
                 "required": ["improve_param_id", "worsen_param_id"],
             },
-        }
+        },
     )
     registry.register(
         name="query_separation",
@@ -128,11 +157,9 @@ def register_default_tools() -> ToolRegistry:
             "description": "查询物理矛盾的分离原理",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "contradiction_desc": {"type": "string"}
-                },
+                "properties": {"contradiction_desc": {"type": "string"}},
                 "required": ["contradiction_desc"],
             },
-        }
+        },
     )
     return registry

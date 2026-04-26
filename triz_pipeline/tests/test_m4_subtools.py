@@ -13,9 +13,10 @@ def setup_db(tmp_path_factory):
     import triz_pipeline.config
     import triz_pipeline.database.init_db
     import triz_pipeline.database.queries
-    triz.config.DB_PATH = db_path
-    triz.database.init_db.DB_PATH = db_path
-    triz.database.queries.DB_PATH = db_path
+
+    triz_pipeline.config.DB_PATH = db_path
+    triz_pipeline.database.init_db.DB_PATH = db_path
+    triz_pipeline.database.queries.DB_PATH = db_path
     init_database()
     yield db_path
     if db_path.exists():

@@ -2,88 +2,483 @@
 # 39 Engineering Parameters, 40 Inventive Principles, Contradiction Matrix, Separation Rules
 
 PARAMETERS = [
-    {"id": 1, "name": "Weight of moving object", "name_cn": "运动物体的重量", "description": "The mass of the object in motion"},
-    {"id": 2, "name": "Weight of stationary object", "name_cn": "静止物体的重量", "description": "The mass of the object at rest"},
-    {"id": 3, "name": "Length of moving object", "name_cn": "运动物体的长度", "description": "The length of the object in motion"},
-    {"id": 4, "name": "Length of stationary object", "name_cn": "静止物体的长度", "description": "The length of the object at rest"},
-    {"id": 5, "name": "Area of moving object", "name_cn": "运动物体的面积", "description": "The area of the object in motion"},
-    {"id": 6, "name": "Area of stationary object", "name_cn": "静止物体的面积", "description": "The area of the object at rest"},
-    {"id": 7, "name": "Volume of moving object", "name_cn": "运动物体的体积", "description": "The volume of the object in motion"},
-    {"id": 8, "name": "Volume of stationary object", "name_cn": "静止物体的体积", "description": "The volume of the object at rest"},
-    {"id": 9, "name": "Speed", "name_cn": "速度", "description": "The velocity of the object"},
-    {"id": 10, "name": "Force", "name_cn": "力", "description": "The interaction that changes the motion of an object"},
-    {"id": 11, "name": "Stress or pressure", "name_cn": "应力或压力", "description": "Force per unit area"},
-    {"id": 12, "name": "Shape", "name_cn": "形状", "description": "The external form or appearance of something"},
-    {"id": 13, "name": "Object composition", "name_cn": "物体结构的稳定性", "description": "The stability of the object's structure"},
-    {"id": 14, "name": "Strength", "name_cn": "强度", "description": "The ability to withstand force"},
-    {"id": 15, "name": "Durability of moving object", "name_cn": "运动物体的耐久性", "description": "How long the moving object lasts"},
-    {"id": 16, "name": "Durability of stationary object", "name_cn": "静止物体的耐久性", "description": "How long the stationary object lasts"},
-    {"id": 17, "name": "Temperature", "name_cn": "温度", "description": "The degree of hotness or coldness"},
-    {"id": 18, "name": "Illumination intensity", "name_cn": "照度", "description": "The amount of light"},
-    {"id": 19, "name": "Energy spent by moving object", "name_cn": "运动物体消耗的能量", "description": "Energy used by the moving object"},
-    {"id": 20, "name": "Energy spent by stationary object", "name_cn": "静止物体消耗的能量", "description": "Energy used by the stationary object"},
-    {"id": 21, "name": "Power", "name_cn": "功率", "description": "The rate of doing work"},
-    {"id": 22, "name": "Waste of energy", "name_cn": "能量损失", "description": "Loss of useful energy"},
-    {"id": 23, "name": "Waste of substance", "name_cn": "物质损失", "description": "Loss of material"},
-    {"id": 24, "name": "Loss of information", "name_cn": "信息损失", "description": "Loss of data or information"},
-    {"id": 25, "name": "Waste of time", "name_cn": "时间损失", "description": "Unproductive time spent"},
-    {"id": 26, "name": "Amount of substance", "name_cn": "物质的量", "description": "The quantity of material"},
-    {"id": 27, "name": "Reliability", "name_cn": "可靠性", "description": "The ability to perform consistently"},
-    {"id": 28, "name": "Measurement accuracy", "name_cn": "测量精度", "description": "The precision of measurement"},
-    {"id": 29, "name": "Manufacturing precision", "name_cn": "制造精度", "description": "The precision of manufacturing"},
-    {"id": 30, "name": "External harm affects the object", "name_cn": "作用于物体的有害因素", "description": "Harmful external factors"},
-    {"id": 31, "name": "Harmful side effects", "name_cn": "有害的副作用", "description": "Negative secondary effects"},
-    {"id": 32, "name": "Manufacturability", "name_cn": "制造性", "description": "Ease of manufacturing"},
-    {"id": 33, "name": "Ease of use", "name_cn": "使用的便利性", "description": "Convenience of operation"},
-    {"id": 34, "name": "Ease of repair", "name_cn": "维修性", "description": "Ease of maintenance and repair"},
-    {"id": 35, "name": "Adaptability", "name_cn": "适应性/通用性", "description": "Ability to adapt to different conditions"},
-    {"id": 36, "name": "Device complexity", "name_cn": "装置的复杂性", "description": "Complexity of the device"},
-    {"id": 37, "name": "Difficulty of detecting and measuring", "name_cn": "检测与测量的难度", "description": "Difficulty in detection and measurement"},
-    {"id": 38, "name": "Extent of automation", "name_cn": "自动化程度", "description": "Level of automation"},
-    {"id": 39, "name": "Productivity", "name_cn": "生产率", "description": "The rate of production"},
+    {
+        "id": 1,
+        "name": "Weight of moving object",
+        "name_cn": "运动物体的重量",
+        "description": "The mass of the object in motion",
+    },
+    {
+        "id": 2,
+        "name": "Weight of stationary object",
+        "name_cn": "静止物体的重量",
+        "description": "The mass of the object at rest",
+    },
+    {
+        "id": 3,
+        "name": "Length of moving object",
+        "name_cn": "运动物体的长度",
+        "description": "The length of the object in motion",
+    },
+    {
+        "id": 4,
+        "name": "Length of stationary object",
+        "name_cn": "静止物体的长度",
+        "description": "The length of the object at rest",
+    },
+    {
+        "id": 5,
+        "name": "Area of moving object",
+        "name_cn": "运动物体的面积",
+        "description": "The area of the object in motion",
+    },
+    {
+        "id": 6,
+        "name": "Area of stationary object",
+        "name_cn": "静止物体的面积",
+        "description": "The area of the object at rest",
+    },
+    {
+        "id": 7,
+        "name": "Volume of moving object",
+        "name_cn": "运动物体的体积",
+        "description": "The volume of the object in motion",
+    },
+    {
+        "id": 8,
+        "name": "Volume of stationary object",
+        "name_cn": "静止物体的体积",
+        "description": "The volume of the object at rest",
+    },
+    {
+        "id": 9,
+        "name": "Speed",
+        "name_cn": "速度",
+        "description": "The velocity of the object",
+    },
+    {
+        "id": 10,
+        "name": "Force",
+        "name_cn": "力",
+        "description": "The interaction that changes the motion of an object",
+    },
+    {
+        "id": 11,
+        "name": "Stress or pressure",
+        "name_cn": "应力或压力",
+        "description": "Force per unit area",
+    },
+    {
+        "id": 12,
+        "name": "Shape",
+        "name_cn": "形状",
+        "description": "The external form or appearance of something",
+    },
+    {
+        "id": 13,
+        "name": "Object composition",
+        "name_cn": "物体结构的稳定性",
+        "description": "The stability of the object's structure",
+    },
+    {
+        "id": 14,
+        "name": "Strength",
+        "name_cn": "强度",
+        "description": "The ability to withstand force",
+    },
+    {
+        "id": 15,
+        "name": "Durability of moving object",
+        "name_cn": "运动物体的耐久性",
+        "description": "How long the moving object lasts",
+    },
+    {
+        "id": 16,
+        "name": "Durability of stationary object",
+        "name_cn": "静止物体的耐久性",
+        "description": "How long the stationary object lasts",
+    },
+    {
+        "id": 17,
+        "name": "Temperature",
+        "name_cn": "温度",
+        "description": "The degree of hotness or coldness",
+    },
+    {
+        "id": 18,
+        "name": "Illumination intensity",
+        "name_cn": "照度",
+        "description": "The amount of light",
+    },
+    {
+        "id": 19,
+        "name": "Energy spent by moving object",
+        "name_cn": "运动物体消耗的能量",
+        "description": "Energy used by the moving object",
+    },
+    {
+        "id": 20,
+        "name": "Energy spent by stationary object",
+        "name_cn": "静止物体消耗的能量",
+        "description": "Energy used by the stationary object",
+    },
+    {
+        "id": 21,
+        "name": "Power",
+        "name_cn": "功率",
+        "description": "The rate of doing work",
+    },
+    {
+        "id": 22,
+        "name": "Waste of energy",
+        "name_cn": "能量损失",
+        "description": "Loss of useful energy",
+    },
+    {
+        "id": 23,
+        "name": "Waste of substance",
+        "name_cn": "物质损失",
+        "description": "Loss of material",
+    },
+    {
+        "id": 24,
+        "name": "Loss of information",
+        "name_cn": "信息损失",
+        "description": "Loss of data or information",
+    },
+    {
+        "id": 25,
+        "name": "Waste of time",
+        "name_cn": "时间损失",
+        "description": "Unproductive time spent",
+    },
+    {
+        "id": 26,
+        "name": "Amount of substance",
+        "name_cn": "物质的量",
+        "description": "The quantity of material",
+    },
+    {
+        "id": 27,
+        "name": "Reliability",
+        "name_cn": "可靠性",
+        "description": "The ability to perform consistently",
+    },
+    {
+        "id": 28,
+        "name": "Measurement accuracy",
+        "name_cn": "测量精度",
+        "description": "The precision of measurement",
+    },
+    {
+        "id": 29,
+        "name": "Manufacturing precision",
+        "name_cn": "制造精度",
+        "description": "The precision of manufacturing",
+    },
+    {
+        "id": 30,
+        "name": "External harm affects the object",
+        "name_cn": "作用于物体的有害因素",
+        "description": "Harmful external factors",
+    },
+    {
+        "id": 31,
+        "name": "Harmful side effects",
+        "name_cn": "有害的副作用",
+        "description": "Negative secondary effects",
+    },
+    {
+        "id": 32,
+        "name": "Manufacturability",
+        "name_cn": "制造性",
+        "description": "Ease of manufacturing",
+    },
+    {
+        "id": 33,
+        "name": "Ease of use",
+        "name_cn": "使用的便利性",
+        "description": "Convenience of operation",
+    },
+    {
+        "id": 34,
+        "name": "Ease of repair",
+        "name_cn": "维修性",
+        "description": "Ease of maintenance and repair",
+    },
+    {
+        "id": 35,
+        "name": "Adaptability",
+        "name_cn": "适应性/通用性",
+        "description": "Ability to adapt to different conditions",
+    },
+    {
+        "id": 36,
+        "name": "Device complexity",
+        "name_cn": "装置的复杂性",
+        "description": "Complexity of the device",
+    },
+    {
+        "id": 37,
+        "name": "Difficulty of detecting and measuring",
+        "name_cn": "检测与测量的难度",
+        "description": "Difficulty in detection and measurement",
+    },
+    {
+        "id": 38,
+        "name": "Extent of automation",
+        "name_cn": "自动化程度",
+        "description": "Level of automation",
+    },
+    {
+        "id": 39,
+        "name": "Productivity",
+        "name_cn": "生产率",
+        "description": "The rate of production",
+    },
 ]
 
 PRINCIPLES = [
-    {"id": 1, "name": "Segmentation", "name_cn": "分割", "description": "Divide an object into independent parts; make an object sectional; increase the degree of an object's segmentation"},
-    {"id": 2, "name": "Taking out / Extraction", "name_cn": "抽取", "description": "Extract the disturbing part or property from an object; extract only the necessary part or property"},
-    {"id": 3, "name": "Local quality", "name_cn": "局部质量", "description": "Change an object's structure from uniform to non-uniform; let different parts carry out different functions; let each part work under conditions most favorable for it"},
-    {"id": 4, "name": "Asymmetry", "name_cn": "不对称", "description": "Change the shape of an object from symmetrical to asymmetrical; if an object is asymmetrical, increase the degree of asymmetry"},
-    {"id": 5, "name": "Merging / Consolidation", "name_cn": "合并", "description": "Bring closer together (or merge) identical or similar objects or operations in space; assemble identical or similar parts to perform parallel operations"},
-    {"id": 6, "name": "Universality", "name_cn": "多用性", "description": "Make a part or object perform multiple functions; eliminate the need for other parts"},
-    {"id": 7, "name": "Nested doll", "name_cn": "嵌套", "description": "Place one object inside another; place multiple objects inside others; make one object pass through a cavity in another"},
-    {"id": 8, "name": "Anti-weight / Weight compensation", "name_cn": "重量补偿", "description": "Merge one object with another that provides lift; interact with the environment for lift"},
-    {"id": 9, "name": "Preliminary anti-action", "name_cn": "预先反作用", "description": "If an action has both useful and harmful effects, replace it with anti-actions to control the harmful effects; create stresses in an object to oppose known harmful working stresses"},
-    {"id": 10, "name": "Preliminary action", "name_cn": "预先作用", "description": "Perform required changes to an object completely or partially in advance; pre-arrange objects so they can come into action from the most convenient place"},
-    {"id": 11, "name": "Beforehand cushioning", "name_cn": "预先防范", "description": "Prepare emergency means beforehand to compensate for the relatively low reliability of an object"},
-    {"id": 12, "name": "Equipotentiality", "name_cn": "等势性", "description": "Change operating conditions so an object need not be raised or lowered"},
-    {"id": 13, "name": "The other way around / Inversion", "name_cn": "反向作用", "description": "Invert the action used to solve the problem; make movable parts fixed and fixed parts movable; turn the object upside down"},
-    {"id": 14, "name": "Spheroidality / Curvature", "name_cn": "曲面化", "description": "Replace linear parts with curved ones, flat surfaces with spherical ones, or cubical shapes with spherical shapes; use rollers, balls, spirals; change from linear to rotary motion"},
-    {"id": 15, "name": "Dynamics", "name_cn": "动态化", "description": "Allow the characteristics of an object to change to be optimal or to find an optimal operating condition; divide an object into parts capable of movement relative to each other; if an object is rigid, make it movable or adaptive"},
-    {"id": 16, "name": "Partial or excessive actions", "name_cn": "不足或过度的作用", "description": "If exact precision is difficult to achieve, allow a little more or a little less to simplify the problem"},
-    {"id": 17, "name": "Another dimension", "name_cn": "一维变多维", "description": "Move an object in two- or three-dimensional space; use a multi-story arrangement of objects; tilt or re-orient the object; use the other side of a given area"},
-    {"id": 18, "name": "Mechanical vibration", "name_cn": "机械振动", "description": "Cause an object to oscillate or vibrate; increase its frequency; use an object's resonant frequency; use piezoelectric vibrators; use combined ultrasonic and electromagnetic field oscillations"},
-    {"id": 19, "name": "Periodic action", "name_cn": "周期性作用", "description": "Replace continuous action with periodic or pulsating action; if an action is already periodic, change its frequency; use pauses between impulses to perform additional action"},
-    {"id": 20, "name": "Continuity of useful action", "name_cn": "有效作用的连续性", "description": "Carry out an action without a break; make all parts of an object work at full capacity all the time; eliminate idle and intermediate motion"},
-    {"id": 21, "name": "Skipping / Rushing through", "name_cn": "快速通过", "description": "Conduct a process or certain stages at high speed"},
-    {"id": 22, "name": "Blessing in disguise / Turn harm into benefit", "name_cn": "变害为利", "description": "Use harmful factors to achieve a positive effect; eliminate the harmful factor by combining it with another; increase the harmful factor to such a degree that it ceases to be harmful"},
-    {"id": 23, "name": "Feedback", "name_cn": "反馈", "description": "Introduce feedback; if feedback already exists, change it; if feedback is continuous, make it periodic; if periodic, make it continuous"},
-    {"id": 24, "name": "Intermediary", "name_cn": "中介物", "description": "Use an intermediary object to transfer or carry out an action; temporarily merge one object with another that is easy to remove"},
-    {"id": 25, "name": "Self-service", "name_cn": "自服务", "description": "Make an object serve itself through auxiliary functions; use waste resources and energy"},
-    {"id": 26, "name": "Copying", "name_cn": "复制", "description": "Instead of an unavailable, expensive, or fragile object, use simpler and inexpensive copies; replace an object or process with optical copies; if visible optical copies are used, change to infrared or ultraviolet copies"},
-    {"id": 27, "name": "Cheap short-living objects", "name_cn": "廉价短寿命", "description": "Replace an expensive object with multiple inexpensive objects, compromising certain qualities such as service life"},
-    {"id": 28, "name": "Mechanics substitution", "name_cn": "机械系统的替代", "description": "Replace a mechanical system with optical, acoustic, or thermal systems; use electric, magnetic, or electromagnetic fields to interact with the object; change from static to movable fields or vice versa"},
-    {"id": 29, "name": "Pneumatics and hydraulics", "name_cn": "气动与液压结构", "description": "Use gas or liquid instead of solid parts of an object; use air cushions or hydrostatic or hydro-reactive parts"},
-    {"id": 30, "name": "Flexible shells and thin films", "name_cn": "柔性壳体和薄膜", "description": "Replace traditional constructions with flexible shells and thin films; isolate the object from its environment using flexible shells and thin films"},
-    {"id": 31, "name": "Porous materials", "name_cn": "多孔材料", "description": "Make an object porous or add porous elements; if an object is already porous, fill the pores with something useful"},
-    {"id": 32, "name": "Color changes", "name_cn": "改变颜色", "description": "Change the color or transparency of an object or its environment; use colored additives; use luminescent traces or trace atoms"},
-    {"id": 33, "name": "Homogeneity", "name_cn": "同质性", "description": "Make objects interact with a given object from the same material or material with similar properties"},
-    {"id": 34, "name": "Discarding and recovering", "name_cn": "抛弃与再生", "description": "Make portions of an object that have fulfilled their functions go away or modify them directly during operation; restore consumable parts during operation"},
-    {"id": 35, "name": "Parameter changes", "name_cn": "物理/化学参数变化", "description": "Change an object's physical state; change the concentration or consistency; change the degree of flexibility; change the temperature or volume"},
-    {"id": 36, "name": "Phase transitions", "name_cn": "相变", "description": "Use phenomena occurring during phase transitions such as volume changes, heat absorption or emission"},
-    {"id": 37, "name": "Thermal expansion", "name_cn": "热膨胀", "description": "Use thermal expansion or contraction of materials; use multiple materials with different coefficients of thermal expansion"},
-    {"id": 38, "name": "Strong oxidants", "name_cn": "强氧化剂", "description": "Replace common air with enriched air; replace enriched air with pure oxygen; expose air or oxygen to ionizing radiation; use ozonized oxygen"},
-    {"id": 39, "name": "Inert atmosphere", "name_cn": "惰性环境", "description": "Replace a normal environment with an inert one; add neutral parts or additives to an object; carry out the process in a vacuum"},
-    {"id": 40, "name": "Composite materials", "name_cn": "复合材料", "description": "Change from uniform to composite materials"},
+    {
+        "id": 1,
+        "name": "Segmentation",
+        "name_cn": "分割",
+        "description": "Divide an object into independent parts; make an object sectional; increase the degree of an object's segmentation",
+    },
+    {
+        "id": 2,
+        "name": "Taking out / Extraction",
+        "name_cn": "抽取",
+        "description": "Extract the disturbing part or property from an object; extract only the necessary part or property",
+    },
+    {
+        "id": 3,
+        "name": "Local quality",
+        "name_cn": "局部质量",
+        "description": "Change an object's structure from uniform to non-uniform; let different parts carry out different functions; let each part work under conditions most favorable for it",
+    },
+    {
+        "id": 4,
+        "name": "Asymmetry",
+        "name_cn": "不对称",
+        "description": "Change the shape of an object from symmetrical to asymmetrical; if an object is asymmetrical, increase the degree of asymmetry",
+    },
+    {
+        "id": 5,
+        "name": "Merging / Consolidation",
+        "name_cn": "合并",
+        "description": "Bring closer together (or merge) identical or similar objects or operations in space; assemble identical or similar parts to perform parallel operations",
+    },
+    {
+        "id": 6,
+        "name": "Universality",
+        "name_cn": "多用性",
+        "description": "Make a part or object perform multiple functions; eliminate the need for other parts",
+    },
+    {
+        "id": 7,
+        "name": "Nested doll",
+        "name_cn": "嵌套",
+        "description": "Place one object inside another; place multiple objects inside others; make one object pass through a cavity in another",
+    },
+    {
+        "id": 8,
+        "name": "Anti-weight / Weight compensation",
+        "name_cn": "重量补偿",
+        "description": "Merge one object with another that provides lift; interact with the environment for lift",
+    },
+    {
+        "id": 9,
+        "name": "Preliminary anti-action",
+        "name_cn": "预先反作用",
+        "description": "If an action has both useful and harmful effects, replace it with anti-actions to control the harmful effects; create stresses in an object to oppose known harmful working stresses",
+    },
+    {
+        "id": 10,
+        "name": "Preliminary action",
+        "name_cn": "预先作用",
+        "description": "Perform required changes to an object completely or partially in advance; pre-arrange objects so they can come into action from the most convenient place",
+    },
+    {
+        "id": 11,
+        "name": "Beforehand cushioning",
+        "name_cn": "预先防范",
+        "description": "Prepare emergency means beforehand to compensate for the relatively low reliability of an object",
+    },
+    {
+        "id": 12,
+        "name": "Equipotentiality",
+        "name_cn": "等势性",
+        "description": "Change operating conditions so an object need not be raised or lowered",
+    },
+    {
+        "id": 13,
+        "name": "The other way around / Inversion",
+        "name_cn": "反向作用",
+        "description": "Invert the action used to solve the problem; make movable parts fixed and fixed parts movable; turn the object upside down",
+    },
+    {
+        "id": 14,
+        "name": "Spheroidality / Curvature",
+        "name_cn": "曲面化",
+        "description": "Replace linear parts with curved ones, flat surfaces with spherical ones, or cubical shapes with spherical shapes; use rollers, balls, spirals; change from linear to rotary motion",
+    },
+    {
+        "id": 15,
+        "name": "Dynamics",
+        "name_cn": "动态化",
+        "description": "Allow the characteristics of an object to change to be optimal or to find an optimal operating condition; divide an object into parts capable of movement relative to each other; if an object is rigid, make it movable or adaptive",
+    },
+    {
+        "id": 16,
+        "name": "Partial or excessive actions",
+        "name_cn": "不足或过度的作用",
+        "description": "If exact precision is difficult to achieve, allow a little more or a little less to simplify the problem",
+    },
+    {
+        "id": 17,
+        "name": "Another dimension",
+        "name_cn": "一维变多维",
+        "description": "Move an object in two- or three-dimensional space; use a multi-story arrangement of objects; tilt or re-orient the object; use the other side of a given area",
+    },
+    {
+        "id": 18,
+        "name": "Mechanical vibration",
+        "name_cn": "机械振动",
+        "description": "Cause an object to oscillate or vibrate; increase its frequency; use an object's resonant frequency; use piezoelectric vibrators; use combined ultrasonic and electromagnetic field oscillations",
+    },
+    {
+        "id": 19,
+        "name": "Periodic action",
+        "name_cn": "周期性作用",
+        "description": "Replace continuous action with periodic or pulsating action; if an action is already periodic, change its frequency; use pauses between impulses to perform additional action",
+    },
+    {
+        "id": 20,
+        "name": "Continuity of useful action",
+        "name_cn": "有效作用的连续性",
+        "description": "Carry out an action without a break; make all parts of an object work at full capacity all the time; eliminate idle and intermediate motion",
+    },
+    {
+        "id": 21,
+        "name": "Skipping / Rushing through",
+        "name_cn": "快速通过",
+        "description": "Conduct a process or certain stages at high speed",
+    },
+    {
+        "id": 22,
+        "name": "Blessing in disguise / Turn harm into benefit",
+        "name_cn": "变害为利",
+        "description": "Use harmful factors to achieve a positive effect; eliminate the harmful factor by combining it with another; increase the harmful factor to such a degree that it ceases to be harmful",
+    },
+    {
+        "id": 23,
+        "name": "Feedback",
+        "name_cn": "反馈",
+        "description": "Introduce feedback; if feedback already exists, change it; if feedback is continuous, make it periodic; if periodic, make it continuous",
+    },
+    {
+        "id": 24,
+        "name": "Intermediary",
+        "name_cn": "中介物",
+        "description": "Use an intermediary object to transfer or carry out an action; temporarily merge one object with another that is easy to remove",
+    },
+    {
+        "id": 25,
+        "name": "Self-service",
+        "name_cn": "自服务",
+        "description": "Make an object serve itself through auxiliary functions; use waste resources and energy",
+    },
+    {
+        "id": 26,
+        "name": "Copying",
+        "name_cn": "复制",
+        "description": "Instead of an unavailable, expensive, or fragile object, use simpler and inexpensive copies; replace an object or process with optical copies; if visible optical copies are used, change to infrared or ultraviolet copies",
+    },
+    {
+        "id": 27,
+        "name": "Cheap short-living objects",
+        "name_cn": "廉价短寿命",
+        "description": "Replace an expensive object with multiple inexpensive objects, compromising certain qualities such as service life",
+    },
+    {
+        "id": 28,
+        "name": "Mechanics substitution",
+        "name_cn": "机械系统的替代",
+        "description": "Replace a mechanical system with optical, acoustic, or thermal systems; use electric, magnetic, or electromagnetic fields to interact with the object; change from static to movable fields or vice versa",
+    },
+    {
+        "id": 29,
+        "name": "Pneumatics and hydraulics",
+        "name_cn": "气动与液压结构",
+        "description": "Use gas or liquid instead of solid parts of an object; use air cushions or hydrostatic or hydro-reactive parts",
+    },
+    {
+        "id": 30,
+        "name": "Flexible shells and thin films",
+        "name_cn": "柔性壳体和薄膜",
+        "description": "Replace traditional constructions with flexible shells and thin films; isolate the object from its environment using flexible shells and thin films",
+    },
+    {
+        "id": 31,
+        "name": "Porous materials",
+        "name_cn": "多孔材料",
+        "description": "Make an object porous or add porous elements; if an object is already porous, fill the pores with something useful",
+    },
+    {
+        "id": 32,
+        "name": "Color changes",
+        "name_cn": "改变颜色",
+        "description": "Change the color or transparency of an object or its environment; use colored additives; use luminescent traces or trace atoms",
+    },
+    {
+        "id": 33,
+        "name": "Homogeneity",
+        "name_cn": "同质性",
+        "description": "Make objects interact with a given object from the same material or material with similar properties",
+    },
+    {
+        "id": 34,
+        "name": "Discarding and recovering",
+        "name_cn": "抛弃与再生",
+        "description": "Make portions of an object that have fulfilled their functions go away or modify them directly during operation; restore consumable parts during operation",
+    },
+    {
+        "id": 35,
+        "name": "Parameter changes",
+        "name_cn": "物理/化学参数变化",
+        "description": "Change an object's physical state; change the concentration or consistency; change the degree of flexibility; change the temperature or volume",
+    },
+    {
+        "id": 36,
+        "name": "Phase transitions",
+        "name_cn": "相变",
+        "description": "Use phenomena occurring during phase transitions such as volume changes, heat absorption or emission",
+    },
+    {
+        "id": 37,
+        "name": "Thermal expansion",
+        "name_cn": "热膨胀",
+        "description": "Use thermal expansion or contraction of materials; use multiple materials with different coefficients of thermal expansion",
+    },
+    {
+        "id": 38,
+        "name": "Strong oxidants",
+        "name_cn": "强氧化剂",
+        "description": "Replace common air with enriched air; replace enriched air with pure oxygen; expose air or oxygen to ionizing radiation; use ozonized oxygen",
+    },
+    {
+        "id": 39,
+        "name": "Inert atmosphere",
+        "name_cn": "惰性环境",
+        "description": "Replace a normal environment with an inert one; add neutral parts or additives to an object; carry out the process in a vacuum",
+    },
+    {
+        "id": 40,
+        "name": "Composite materials",
+        "name_cn": "复合材料",
+        "description": "Change from uniform to composite materials",
+    },
 ]
 
 # Simplified contradiction matrix: (improve_param, worsen_param) -> list of principle IDs
@@ -127,7 +522,6 @@ MATRIX = {
     (1, 37): [28, 2, 10, 27],
     (1, 38): [26, 35, 28, 18],
     (1, 39): [28, 35, 10, 36],
-
     # Row 2: Weight of stationary object
     (2, 1): [27, 26, 35, 31],
     (2, 3): [28, 2, 10, 19],
@@ -166,7 +560,6 @@ MATRIX = {
     (2, 37): [2, 28, 10, 19],
     (2, 38): [2, 26, 35, 28],
     (2, 39): [1, 28, 15, 35],
-
     # Row 3: Length of moving object
     (3, 1): [1, 8, 15, 34],
     (3, 2): [1, 29, 4],
@@ -205,7 +598,6 @@ MATRIX = {
     (3, 37): [1, 8, 15, 34],
     (3, 38): [1, 8, 15, 34],
     (3, 39): [1, 8, 15, 34],
-
     # Row 4: Length of stationary object
     (4, 1): [1, 14, 35],
     (4, 2): [35, 28, 40, 29],
@@ -244,7 +636,6 @@ MATRIX = {
     (4, 37): [7, 2, 35],
     (4, 38): [7, 2, 35],
     (4, 39): [7, 2, 35],
-
     # Row 5: Area of moving object
     (5, 1): [2, 17, 30],
     (5, 2): [30, 2, 14, 18],
@@ -283,7 +674,6 @@ MATRIX = {
     (5, 37): [14, 15, 18, 4],
     (5, 38): [14, 15, 18, 4],
     (5, 39): [14, 15, 18, 4],
-
     # Row 7: Volume of moving object
     (7, 1): [2, 35, 6],
     (7, 2): [2, 6],
@@ -322,7 +712,6 @@ MATRIX = {
     (7, 37): [1, 8, 15, 34],
     (7, 38): [1, 8, 15, 34],
     (7, 39): [1, 8, 15, 34],
-
     # Row 9: Speed
     (9, 1): [2, 28, 13, 38],
     (9, 2): [13, 28, 15, 19],
@@ -361,7 +750,6 @@ MATRIX = {
     (9, 37): [2, 28, 13, 38],
     (9, 38): [2, 28, 13, 38],
     (9, 39): [2, 28, 13, 38],
-
     # Row 10: Force
     (10, 1): [35, 10, 21, 28],
     (10, 2): [35, 10, 36, 37],
@@ -400,7 +788,6 @@ MATRIX = {
     (10, 37): [10, 35, 14, 3],
     (10, 38): [10, 35, 14, 3],
     (10, 39): [10, 35, 14, 3],
-
     # Row 12: Shape
     (12, 1): [28, 34, 10, 18],
     (12, 2): [28, 34, 10, 18],
@@ -439,7 +826,6 @@ MATRIX = {
     (12, 37): [28, 34, 10, 18],
     (12, 38): [28, 34, 10, 18],
     (12, 39): [28, 34, 10, 18],
-
     # Row 14: Strength
     (14, 1): [27, 3, 15, 40],
     (14, 2): [27, 3, 15, 40],
@@ -478,7 +864,6 @@ MATRIX = {
     (14, 37): [27, 3, 15, 40],
     (14, 38): [27, 3, 15, 40],
     (14, 39): [27, 3, 15, 40],
-
     # Row 17: Temperature
     (17, 1): [36, 22, 6, 38],
     (17, 2): [36, 22, 6, 38],
@@ -517,7 +902,6 @@ MATRIX = {
     (17, 37): [36, 22, 6, 38],
     (17, 38): [36, 22, 6, 38],
     (17, 39): [36, 22, 6, 38],
-
     # Row 19: Energy spent by moving object
     (19, 1): [12, 18, 28, 31],
     (19, 2): [12, 18, 28, 31],
@@ -556,7 +940,6 @@ MATRIX = {
     (19, 37): [12, 18, 28, 31],
     (19, 38): [12, 18, 28, 31],
     (19, 39): [12, 18, 28, 31],
-
     # Row 21: Power
     (21, 1): [19, 35, 38, 2],
     (21, 2): [19, 35, 38, 2],
@@ -595,7 +978,6 @@ MATRIX = {
     (21, 37): [19, 35, 38, 2],
     (21, 38): [19, 35, 38, 2],
     (21, 39): [19, 35, 38, 2],
-
     # Row 25: Waste of time
     (25, 1): [10, 30, 4, 34],
     (25, 2): [10, 30, 4, 34],
@@ -634,7 +1016,6 @@ MATRIX = {
     (25, 37): [10, 30, 4, 34],
     (25, 38): [10, 30, 4, 34],
     (25, 39): [10, 30, 4, 34],
-
     # Row 27: Reliability
     (27, 1): [11, 32, 1, 35],
     (27, 2): [11, 32, 1, 35],
@@ -673,7 +1054,6 @@ MATRIX = {
     (27, 37): [11, 32, 1, 35],
     (27, 38): [11, 32, 1, 35],
     (27, 39): [11, 32, 1, 35],
-
     # Row 29: Manufacturing precision
     (29, 1): [28, 35, 26, 18],
     (29, 2): [28, 35, 26, 18],
@@ -712,7 +1092,6 @@ MATRIX = {
     (29, 37): [28, 35, 26, 18],
     (29, 38): [28, 35, 26, 18],
     (29, 39): [28, 35, 26, 18],
-
     # Row 30: External harm affects the object
     (30, 1): [22, 21, 18, 27],
     (30, 2): [22, 21, 18, 27],
@@ -751,7 +1130,6 @@ MATRIX = {
     (30, 37): [22, 21, 18, 27],
     (30, 38): [22, 21, 18, 27],
     (30, 39): [22, 21, 18, 27],
-
     # Row 32: Manufacturability
     (32, 1): [27, 1, 12, 24],
     (32, 2): [27, 1, 12, 24],
@@ -790,7 +1168,6 @@ MATRIX = {
     (32, 37): [27, 1, 12, 24],
     (32, 38): [27, 1, 12, 24],
     (32, 39): [27, 1, 12, 24],
-
     # Row 33: Ease of use
     (33, 1): [26, 35, 28, 34],
     (33, 2): [26, 35, 28, 34],
@@ -829,7 +1206,6 @@ MATRIX = {
     (33, 37): [26, 35, 28, 34],
     (33, 38): [26, 35, 28, 34],
     (33, 39): [26, 35, 28, 34],
-
     # Row 35: Adaptability
     (35, 1): [1, 15, 29, 4],
     (35, 2): [1, 15, 29, 4],
@@ -868,7 +1244,6 @@ MATRIX = {
     (35, 37): [1, 15, 29, 4],
     (35, 38): [1, 15, 29, 4],
     (35, 39): [1, 15, 29, 4],
-
     # Row 36: Device complexity
     (36, 1): [26, 35, 28, 34],
     (36, 2): [26, 35, 28, 34],
@@ -907,7 +1282,6 @@ MATRIX = {
     (36, 37): [26, 35, 28, 34],
     (36, 38): [26, 35, 28, 34],
     (36, 39): [26, 35, 28, 34],
-
     # Row 39: Productivity
     (39, 1): [35, 26, 24, 37],
     (39, 2): [35, 26, 24, 37],

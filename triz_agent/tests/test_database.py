@@ -1,5 +1,9 @@
 import pytest
-from triz_agent.database.triz_data import get_parameters, get_matrix_cell, get_separation_rules
+from triz_agent.database.triz_data import (
+    get_parameters,
+    get_matrix_cell,
+    get_separation_rules,
+)
 
 
 def test_get_parameters_count():

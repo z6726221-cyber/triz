@@ -1,7 +1,14 @@
 """集成测试：验证完整 workflow 的数据流"""
+
 import pytest
 import os
-from triz_pipeline.context import WorkflowContext, SAO, Solution, SolutionDraft, QualitativeTags
+from triz_pipeline.context import (
+    WorkflowContext,
+    SAO,
+    Solution,
+    SolutionDraft,
+    QualitativeTags,
+)
 from triz_pipeline.tools.m2_gate import should_trigger_m2
 from tests.helpers import formulate_problem
 from triz_pipeline.tools.query_parameters import query_parameters
@@ -12,14 +19,24 @@ from triz_pipeline.database.init_db import init_database
 
 def _make_solution(relevance=5, consistency=5, ideality=0.8):
     return Solution(
-        draft=SolutionDraft(title="测试方案", description="测试描述",
-                           applied_principles=[1], resource_mapping="测试资源"),
-        tags=QualitativeTags(
-            feasibility_score=4, resource_fit_score=4, innovation_score=4,
-            uniqueness_score=3, risk_level="low", ifr_deviation_reason="",
-            problem_relevance_score=relevance, logical_consistency_score=consistency,
+        draft=SolutionDraft(
+            title="测试方案",
+            description="测试描述",
+            applied_principles=[1],
+            resource_mapping="测试资源",
         ),
-        ideality_score=ideality, evaluation_rationale="测试评估",
+        tags=QualitativeTags(
+            feasibility_score=4,
+            resource_fit_score=4,
+            innovation_score=4,
+            uniqueness_score=3,
+            risk_level="low",
+            ifr_deviation_reason="",
+            problem_relevance_score=relevance,
+            logical_consistency_score=consistency,
+        ),
+        ideality_score=ideality,
+        evaluation_rationale="测试评估",
     )
 
 
@@ -29,9 +46,10 @@ def setup_db(tmp_path_factory):
     import triz_pipeline.config
     import triz_pipeline.database.init_db
     import triz_pipeline.database.queries
-    triz.config.DB_PATH = db_path
-    triz.database.init_db.DB_PATH = db_path
-    triz.database.queries.DB_PATH = db_path
+
+    triz_pipeline.config.DB_PATH = db_path
+    triz_pipeline.database.init_db.DB_PATH = db_path
+    triz_pipeline.database.queries.DB_PATH = db_path
     init_database()
     yield db_path
     if db_path.exists():
@@ -59,7 +77,10 @@ class TestDataFlow:
 
         result = formulate_problem(ctx)
         assert result["problem_type"] == "tech"
-        assert "热量" in result["contradiction_desc"] or "效率" in result["contradiction_desc"]
+        assert (
+            "热量" in result["contradiction_desc"]
+            or "效率" in result["contradiction_desc"]
+        )
 
     def test_m3_to_m4_subtools(self):
         """M3 → M4 数据流：通过 sub-tools 查询矛盾矩阵"""
@@ -81,7 +102,9 @@ class TestDataFlow:
         ctx.iteration = 1
         ctx.unresolved_signals = []
         ctx.history_log = [{"max_ideality": 0.6}]
-        ctx.ranked_solutions = [_make_solution(relevance=5, consistency=5, ideality=0.8)]
+        ctx.ranked_solutions = [
+            _make_solution(relevance=5, consistency=5, ideality=0.8)
+        ]
 
         decision = check_convergence(ctx)
         assert decision.action == "TERMINATE"

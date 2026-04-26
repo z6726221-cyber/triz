@@ -1,4 +1,5 @@
 """triz 命令入口：默认启动 Agent 模式，加 --pipeline 切换到 Pipeline 模式。"""
+
 import sys
 import os
 
@@ -16,10 +17,13 @@ def main():
     if "--pipeline" in sys.argv:
         sys.argv.remove("--pipeline")
         from triz_pipeline.cli import main as pipeline_main
+
         pipeline_main()
     else:
         from triz_agent.cli import main as agent_main
+
         agent_main()
+
 
 if __name__ == "__main__":
     main()

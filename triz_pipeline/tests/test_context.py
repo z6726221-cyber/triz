@@ -1,5 +1,12 @@
 import pytest
-from triz_pipeline.context import SAO, WorkflowContext, ConvergenceDecision, Solution, QualitativeTags, SolutionDraft
+from triz_pipeline.context import (
+    SAO,
+    WorkflowContext,
+    ConvergenceDecision,
+    Solution,
+    QualitativeTags,
+    SolutionDraft,
+)
 
 
 def test_sao_creation():
@@ -22,12 +29,19 @@ def test_convergence_decision():
 
 
 def test_solution_model():
-    draft = SolutionDraft(title="测试", description="描述", applied_principles=[1], resource_mapping="无")
-    tags = QualitativeTags(
-        feasibility_score=4, resource_fit_score=5,
-        innovation_score=3, uniqueness_score=3,
-        risk_level="low", ifr_deviation_reason=""
+    draft = SolutionDraft(
+        title="测试", description="描述", applied_principles=[1], resource_mapping="无"
     )
-    sol = Solution(draft=draft, tags=tags, ideality_score=0.8, evaluation_rationale="测试")
+    tags = QualitativeTags(
+        feasibility_score=4,
+        resource_fit_score=5,
+        innovation_score=3,
+        uniqueness_score=3,
+        risk_level="low",
+        ifr_deviation_reason="",
+    )
+    sol = Solution(
+        draft=draft, tags=tags, ideality_score=0.8, evaluation_rationale="测试"
+    )
     assert sol.ideality_score == 0.8
     assert sol.tags.risk_level == "low"

@@ -1,4 +1,5 @@
 """矛盾求解 Tool：根据矛盾类型查询发明原理（替代 M4 Skill）。"""
+
 from triz_agent.tools.query_parameters import map_to_parameters
 from triz_agent.tools.query_matrix import query_matrix
 from triz_agent.tools.query_separation import query_separation
@@ -73,6 +74,7 @@ def solve_contradiction(ctx=None, **kwargs) -> dict:
 
     # 兜底：从 contradiction_desc 或 candidate_attributes 关键词查询
     from triz_agent.tools.query_parameters import query_parameters
+
     keywords = candidate_attributes or []
     if contradiction_desc:
         keywords.append(contradiction_desc[:20])

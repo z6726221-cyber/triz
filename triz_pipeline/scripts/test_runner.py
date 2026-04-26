@@ -1,4 +1,5 @@
 """批量测试基础模块：统一结果记录和报告格式。支持 Orchestrator 和 Agent 双模式。"""
+
 import concurrent.futures
 import json
 import sys
@@ -26,7 +27,9 @@ def _log(msg: str, log_file=None):
             f.flush()
 
 
-def run_single(question: str, verbose: bool = False, mode: str = "orchestrator") -> dict:
+def run_single(
+    question: str, verbose: bool = False, mode: str = "orchestrator"
+) -> dict:
     """运行单个问题，返回详细结果。mode: 'orchestrator' 或 'agent'。"""
     start = time.time()
 
@@ -40,29 +43,37 @@ def run_single(question: str, verbose: bool = False, mode: str = "orchestrator")
             if event_type == "step_start":
                 steps_log.append(data.get("step_name"))
                 if "agent_thought" in data:
-                    agent_thoughts.append({
-                        "step": data.get("step_name"),
-                        "thought": data.get("agent_thought", ""),
-                    })
+                    agent_thoughts.append(
+                        {
+                            "step": data.get("step_name"),
+                            "thought": data.get("agent_thought", ""),
+                        }
+                    )
             elif event_type == "step_error":
-                errors.append({
-                    "node": nodes_info[-1]["name"] if nodes_info else "unknown",
-                    "step": data.get("step_name"),
-                    "error": data.get("error"),
-                })
+                errors.append(
+                    {
+                        "node": nodes_info[-1]["name"] if nodes_info else "unknown",
+                        "step": data.get("step_name"),
+                        "error": data.get("error"),
+                    }
+                )
             elif event_type == "node_start":
-                nodes_info.append({
-                    "name": data["node_name"],
-                    "current": data["current"],
-                    "started_at": time.time(),
-                })
+                nodes_info.append(
+                    {
+                        "name": data["node_name"],
+                        "current": data["current"],
+                        "started_at": time.time(),
+                    }
+                )
 
         if mode == "agent":
             from triz_pipeline.agent import TrizAgent
+
             runner = TrizAgent(callback=capture_callback)
             run_method = lambda q: runner.run(q)
         else:
             from triz_pipeline.orchestrator import Orchestrator
+
             runner = Orchestrator(callback=None)
             runner.callback = capture_callback
             run_method = runner.run_workflow
@@ -96,9 +107,14 @@ def run_single(question: str, verbose: bool = False, mode: str = "orchestrator")
     return _execute()
 
 
-def run_batch(test_cases: list[dict], name: str, mode: str = "orchestrator",
-              verbose: bool = False, delay: float = 8.0,
-              log_file: str = None) -> dict:
+def run_batch(
+    test_cases: list[dict],
+    name: str,
+    mode: str = "orchestrator",
+    verbose: bool = False,
+    delay: float = 8.0,
+    log_file: str = None,
+) -> dict:
     """批量运行测试用例。
 
     test_cases: [{"question": str, "expected_behavior": str, ...}]
@@ -145,7 +161,9 @@ def run_batch(test_cases: list[dict], name: str, mode: str = "orchestrator",
     # 保存报告
     report_dir = Path(__file__).parent / "reports"
     report_dir.mkdir(exist_ok=True)
-    report_path = report_dir / f"{name}_{mode}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    report_path = (
+        report_dir / f"{name}_{mode}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
 

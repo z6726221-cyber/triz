@@ -1,4 +1,5 @@
 """triz_pipeline 命令入口：确保 editable install 的包可被找到。"""
+
 import sys
 import os
 

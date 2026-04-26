@@ -1,4 +1,5 @@
 """向量计算工具：余弦相似度、语义文本嵌入（sentence-transformers）"""
+
 import math
 from typing import List
 
@@ -11,8 +12,11 @@ def _get_model():
     global _model
     if _model is None:
         from sentence_transformers import SentenceTransformer
+
         # paraphrase-multilingual-MiniLM-L12-v2：支持中文，~100MB，效果足够
-        _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2", local_files_only=True)
+        _model = SentenceTransformer(
+            "paraphrase-multilingual-MiniLM-L12-v2", local_files_only=True
+        )
     return _model
 
 
