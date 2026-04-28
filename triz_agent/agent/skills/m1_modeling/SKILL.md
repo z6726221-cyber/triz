@@ -1,15 +1,18 @@
 ---
-name: m1_modeling
+name: modeling
 description: >
-  当用户提出工程问题，需要提取功能模型（SAO三元组、资源、IFR）时使用。
+  提取工程问题的功能模型（SAO 三元组、资源盘点、理想最终结果 IFR）。
+  当用户说"分析这个问题"、"功能建模"、"提取 SAO"、"盘点资源"、"定义 IFR"时使用。
+  Do NOT use when：已存在完整的功能建模结果（SAO、资源、IFR 均已输出），或用户问题不是工程问题（如闲聊、天气查询等）。
 version: "1.0"
 gotchas:
   - 问题描述过于抽象时 SAO 提取会失败，应先要求具体化
   - function_type 必须是 useful/harmful/excessive/insufficient 之一
   - LLM 常忽略"时间"和"信息"类资源
+allowed-tools: ["Read", "Write", "Glob", "Grep"]
 ---
 
-# M1 功能建模
+# 功能建模
 
 ## 任务
 将用户问题拆解为功能模型，包括 SAO 三元组、可用资源和理想最终结果。
@@ -52,3 +55,7 @@ gotchas:
 2. **function_type 误用**：LLM 倾向于把所有功能标为 useful → 需要检查是否有 harmful/excessive/insufficient，特别是用户明确提到的负面效果
 3. **资源遗漏**：LLM 常忽略"时间"和"信息"类资源 → 提示中强调六类资源（物质/场/空间/时间/信息/功能）都要检查
 4. **IFR 过于笼统**：IFR 应描述具体的理想状态，而非泛泛的"系统自动完成" → 应包含具体的自服务机制
+
+## 完整输出示例
+
+如需查看完整输出示例，请使用 Read 工具读取 `references/examples.md`。

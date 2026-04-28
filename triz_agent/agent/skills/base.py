@@ -58,12 +58,45 @@ class AgentSkill(ABC):
         return "\n".join(parts)
 
     def _load_extra_references(self) -> str:
-        """加载额外的参考文档，拼接到 system_prompt。子类可覆盖。"""
+        """加载额外的参考文档，拼接到 system_prompt。子类可覆盖。
+
+        默认返回空字符串，references/ 内容由 SKILL.md 指示 LLM 按需用 Read 工具读取，
+        符合渐进式披露原则，避免无条件加载增加 token 开销。
+        """
         return ""
 
     def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
-        """业务逻辑校验，返回警告列表。子类可覆盖。"""
+        """业务逻辑校验，返回警告列表。
+
+        优先调用 scripts/validate_output.py 脚本（如果存在），
+        以确定性代码校验输出；子类也可覆盖此方法。
+        """
+        # 优先尝试脚本化校验
+        script_warnings = self._call_validate_script(output, ctx)
+        if script_warnings is not None:
+            return script_warnings
+        # 子类覆盖
         return []
+
+    def _call_validate_script(self, output: str, ctx: WorkflowContext) -> list[str] | None:
+        """调用 scripts/validate_output.py，返回警告列表或 None。"""
+        try:
+            import sys
+            from pathlib import Path
+            handler_file = None
+            try:
+                handler_file = inspect.getfile(type(self))
+            except TypeError:
+                handler_file = __file__
+            script_dir = Path(handler_file).parent / "scripts"
+            validate_script = script_dir / "validate_output.py"
+            if not validate_script.exists():
+                return None
+            sys.path.insert(0, str(script_dir))
+            from validate_output import validate
+            return validate(output, ctx)
+        except Exception:
+            return None
 
     def post_process(self, output: str) -> dict | None:
         """Skill 输出后自动解析，返回结构化数据。子类可覆盖。
@@ -126,6 +159,55 @@ class AgentSkill(ABC):
         if self._gotchas_cache is None:
             self._gotchas_cache = self._parse_gotchas()
         return self._gotchas_cache
+
+    @property
+    def allowed_tools(self) -> list[str]:
+        """从 SKILL.md frontmatter 解析 allowed-tools 列表。"""
+        return self._parse_allowed_tools()
+
+    def _parse_allowed_tools(self) -> list[str]:
+        """解析 SKILL.md frontmatter 中的 allowed-tools 列表。"""
+        try:
+            handler_file = inspect.getfile(type(self))
+        except TypeError:
+            handler_file = __file__
+
+        skill_dir = Path(handler_file).parent
+        skill_md = skill_dir / "SKILL.md"
+
+        if not skill_md.exists():
+            return []
+
+        content = skill_md.read_text(encoding="utf-8")
+        match = _FRONTMATTER_RE.match(content)
+        if not match:
+            return []
+
+        frontmatter = match.group(1)
+        in_allowed = False
+        tools = []
+        for line in frontmatter.split("\n"):
+            stripped = line.strip()
+            if stripped.startswith("allowed-tools:"):
+                in_allowed = True
+                # 同行格式：allowed-tools: ["Bash", "Read"]
+                rest = stripped[len("allowed-tools:"):].strip()
+                if rest and rest != "[]":
+                    # 简单解析
+                    import ast
+                    try:
+                        val = ast.literal_eval(rest)
+                        if isinstance(val, list):
+                            tools.extend(val)
+                    except Exception:
+                        pass
+                continue
+            if in_allowed:
+                if stripped.startswith("- "):
+                    tools.append(stripped[2:].strip().strip('"').strip("'"))
+                elif stripped and not stripped.startswith("#"):
+                    break
+        return tools
 
     def _parse_gotchas(self) -> list[str]:
         """解析 SKILL.md frontmatter 中的 gotchas 列表。"""

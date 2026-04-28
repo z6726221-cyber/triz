@@ -1,21 +1,24 @@
 ---
-name: m2_causal
+name: causal
 description: >
-  当存在负面功能（harmful/excessive/insufficient）需要追溯根因时使用。
+  从负面功能出发执行 RCA 根因分析，构建因果链，找到根因节点和候选物理属性。
+  当用户说"根因分析"、"追溯根因"、"为什么会出现这个问题"、"因果链"时使用。
+  Do NOT use when：功能建模未完成（无 SAO 三元组），或不存在负面功能（所有功能均为 useful），或已存在完整的因果链和根因分析。
 version: "1.0"
 gotchas:
   - 因果链层数不足时根因分析不充分，应至少 3 层
   - candidate_attributes 应是物理/工程属性词，不是问题描述
-  - 不要输出矛盾对，矛盾定型是 M3 的工作
+  - 不要输出矛盾对，矛盾定型是后续步骤的工作
+allowed-tools: ["Read", "Write", "Glob", "Grep"]
 ---
 
-# M2 根因分析
+# 根因分析
 
 ## 任务
 从负面功能出发，执行 RCA+因果链分析，找到根因节点和候选物理属性。
 
 ## 输入
-你会收到用户问题和之前的分析结果（包括 M1 的功能模型）。从中识别负面功能（harmful/excessive/insufficient），基于它们构建因果链。
+你会收到用户问题和之前的分析结果（包括功能建模的结果）。从中识别负面功能（harmful/excessive/insufficient），基于它们构建因果链。
 
 ## 分析步骤
 
@@ -60,3 +63,7 @@ gotchas:
 2. **属性词不准确**：candidate_attributes 应是具体的物理/工程属性（如"温度"、"应力"、"摩擦系数"），而非问题描述（如"噪音大"）
 3. **混淆矛盾定型**：M2 只负责找根因和属性，不要输出"A 与 B 的矛盾" → 矛盾对是 M3 的工作
 4. **忽略负面功能**：如果 SAO 列表中没有 harmful/excessive/insufficient，M2 可以跳过
+
+## 完整输出示例
+
+如需查看完整输出示例，请使用 Read 工具读取 `references/examples.md`。

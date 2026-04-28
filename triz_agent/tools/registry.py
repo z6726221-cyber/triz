@@ -37,11 +37,18 @@ class ToolRegistry:
             if tool["schema"]
         ]
 
-    def execute(self, name: str, arguments: dict) -> Any:
-        """执行指定 Tool，传入参数 dict。"""
+    def execute(self, name: str, arguments: dict | None = None, ctx=None) -> Any:
+        """执行指定 Tool，传入参数 dict 和可选的 ctx。"""
         if name not in self._tools:
             raise ValueError(f"未知 Tool: {name}")
-        return self._tools[name]["func"](**arguments)
+        func = self._tools[name]["func"]
+        kwargs = arguments.copy() if arguments else {}
+        # 检查函数是否接受 ctx 参数
+        import inspect
+        sig = inspect.signature(func)
+        if "ctx" in sig.parameters:
+            kwargs["ctx"] = ctx
+        return func(**kwargs)
 
     def list_tools(self) -> list[str]:
         """返回所有已注册 Tool 的名称列表。"""
@@ -58,7 +65,7 @@ def register_default_tools() -> ToolRegistry:
         func=solve_contradiction,
         schema={
             "name": "solve_contradiction",
-            "description": "根据矛盾对查询 TRIZ 矛盾矩阵，返回推荐的发明原理编号。当你已经定义了技术矛盾或物理矛盾后，必须调用此工具获取发明原理。",
+            "description": "矛盾求解：根据矛盾对查询 TRIZ 矛盾矩阵，返回推荐的发明原理编号。当你已经定义了技术矛盾或物理矛盾后，必须调用此工具获取发明原理。",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -85,7 +92,7 @@ def register_default_tools() -> ToolRegistry:
         func=search_patents,
         schema={
             "name": "search_patents",
-            "description": "搜索 Google Patents 跨领域专利案例。当你有了发明原理后，调用此工具搜索相关跨领域案例作为方案参考。",
+            "description": "跨界搜索：搜索 Google Patents 跨领域专利案例。当你有了发明原理后，必须先调用此工具，获取跨界案例，然后才能生成方案。这是强制步骤，不能跳过。",
             "parameters": {
                 "type": "object",
                 "properties": {

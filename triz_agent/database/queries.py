@@ -46,6 +46,20 @@ def get_all_parameters() -> List[dict]:
         return result
 
 
+def get_all_principles() -> List[dict]:
+    """获取所有发明原理。"""
+    with _get_conn() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id, name, name_cn, description FROM principles ORDER BY id"
+        )
+        rows = cursor.fetchall()
+        return [
+            {"id": r[0], "name": r[1], "name_cn": r[2], "description": r[3]}
+            for r in rows
+        ]
+
+
 def query_parameters_by_similarity(keyword: str) -> List[dict]:
     """基于关键词模糊查询参数"""
     with _get_conn() as conn:
@@ -122,3 +136,22 @@ def query_cases(
             }
             for r in rows
         ]
+
+
+def add_case(
+    principle_id: int,
+    function: str,
+    context: str,
+    source: str,
+    title: str,
+    description: str,
+) -> int:
+    """添加案例到数据库，返回影响行数。"""
+    with _get_conn() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO cases (principle_id, function, context, source, title, description) VALUES (?, ?, ?, ?, ?, ?)",
+            (principle_id, function, context, source, title, description),
+        )
+        conn.commit()
+        return cursor.lastrowid

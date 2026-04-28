@@ -15,7 +15,7 @@ class M1ModelingSkill(AgentSkill):
     输出 Markdown，由 Agent 自主理解并管理数据流转。
     """
 
-    name = "m1_modeling"
+    name = "modeling"
     description = """当用户提出工程问题，需要：
 - 拆解功能模型（对象、动作、属性）
 - 提取 SAO 三元组
@@ -24,13 +24,5 @@ class M1ModelingSkill(AgentSkill):
 适用场景：新工程问题首次分析，或需要重新建模时。"""
     temperature = 0.1
 
-    def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
-        warnings = []
-        output_lower = output.lower()
-        if "sao" not in output_lower and "三元组" not in output:
-            warnings.append("输出中未发现 SAO 三元组相关内容")
-        if "ifr" not in output_lower and "理想最终结果" not in output:
-            warnings.append("输出中未发现 IFR 相关内容")
-        if "资源" not in output:
-            warnings.append("输出中未发现资源盘点内容")
-        return warnings
+    # post_validate 由 base.py 自动调用 scripts/validate_output.py
+    # 如需额外校验，在此补充或覆盖 post_validate 方法

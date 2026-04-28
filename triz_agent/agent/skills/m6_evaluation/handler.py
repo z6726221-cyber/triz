@@ -12,7 +12,7 @@ class M6EvaluationSkill(AgentSkill):
     输出 Markdown，由 Agent 自主理解并管理数据流转。
     """
 
-    name = "m6_evaluation"
+    name = "evaluation"
     description = """当 M5 已生成方案草案后，需要：
 - 独立评审每个方案的 8 维度量化评分
 - 计算理想度（Ideality）
@@ -25,10 +25,5 @@ class M6EvaluationSkill(AgentSkill):
         """加载详细评分标准。"""
         return self._load_reference("scoring_rubric.md") or ""
 
-    def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
-        warnings = []
-        if "评分" not in output and "score" not in output.lower():
-            warnings.append("输出中未发现评分内容")
-        if "理想度" not in output and "ideality" not in output.lower():
-            warnings.append("输出中未发现理想度相关内容")
-        return warnings
+    # post_validate 由 base.py 自动调用 scripts/validate_output.py
+    # 如需额外校验，在此补充或覆盖 post_validate 方法

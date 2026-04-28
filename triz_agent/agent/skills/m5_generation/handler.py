@@ -14,7 +14,7 @@ class M5GenerationSkill(AgentSkill):
     输出 Markdown，由 Agent 自主理解并管理数据流转。
     """
 
-    name = "m5_generation"
+    name = "generation"
     description = """当 M3/M4 已完成，获得发明原理后，需要：
 - 生成跨领域搜索词
 - 查询外部案例库（Google Patents 等）
@@ -27,10 +27,5 @@ class M5GenerationSkill(AgentSkill):
         """加载详细生成指南。"""
         return self._load_reference("generation_guide.md") or ""
 
-    def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
-        warnings = []
-        if "方案" not in output and "solution" not in output.lower():
-            warnings.append("输出中未发现方案内容")
-        if "原理" not in output and "principle" not in output.lower():
-            warnings.append("输出中未引用发明原理")
-        return warnings
+    # post_validate 由 base.py 自动调用 scripts/validate_output.py
+    # 如需额外校验，在此补充或覆盖 post_validate 方法

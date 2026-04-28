@@ -12,7 +12,7 @@ class M2CausalSkill(AgentSkill):
     输出 Markdown，由 Agent 自主理解并管理数据流转。
     """
 
-    name = "m2_causal"
+    name = "causal"
     description = """当 M1 功能建模已完成，存在负面功能（harmful/excessive/insufficient）时，需要：
 - 执行 RCA 根因分析
 - 构建因果链
@@ -20,10 +20,5 @@ class M2CausalSkill(AgentSkill):
 适用场景：功能模型已建立，需要追溯问题根源时。"""
     temperature = 0.3
 
-    def post_validate(self, output: str, ctx: WorkflowContext) -> list[str]:
-        warnings = []
-        if "因果链" not in output and "causal" not in output.lower():
-            warnings.append("输出中未发现因果链内容")
-        if "根因" not in output and "root" not in output.lower():
-            warnings.append("输出中未发现根因分析内容")
-        return warnings
+    # post_validate 由 base.py 自动调用 scripts/validate_output.py
+    # 如需额外校验，在此补充或覆盖 post_validate 方法

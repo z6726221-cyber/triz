@@ -23,6 +23,7 @@ def search_patents(
     """接收 M5 生成的 query 列表，执行搜索，返回结构化报告。
 
     FOS 不再自主提取 function/domain，只负责"怎么搜"。
+    SerpAPI 不可用时回退到本地案例库。
     """
     if not queries:
         return FOSReport()
@@ -30,6 +31,7 @@ def search_patents(
     all_results: list[SearchResult] = []
     cache_hits = 0
     api_calls = 0
+    serpapi_available = False
 
     for query in queries:
         cached = _get_cache(query)
@@ -41,11 +43,19 @@ def search_patents(
                 continue
             try:
                 results = _search_serpapi(query, limit_per_query)
+                if results:
+                    serpapi_available = True
                 all_results.extend(results)
                 _set_cache(query, results)
                 api_calls += 1
             except Exception:
                 pass
+
+    # SerpAPI 无结果或不可用时，回退到本地案例库
+    if not serpapi_available or not all_results:
+        local_cases = _search_local_cases(principles, queries, limit_per_query)
+        if local_cases:
+            all_results.extend(local_cases)
 
     # 按 title 去重
     seen_titles = set()
@@ -81,6 +91,10 @@ def search_patents(
     )
 
 
+# 标记为 FOS 模式，由 Agent 负责生成 queries
+search_patents._fos_mode = True
+
+
 def _search_serpapi(query: str, num: int = 5) -> list[SearchResult]:
     """调用 SerpApi 搜索 Google Patents（单个 query）。"""
     from serpapi import GoogleSearch
@@ -107,6 +121,41 @@ def _search_serpapi(query: str, num: int = 5) -> list[SearchResult]:
             )
         )
     return cases
+
+
+def _search_local_cases(
+    principles: list[int],
+    queries: list[str],
+    limit: int = 5,
+) -> list[SearchResult]:
+    """从本地案例库查询案例。"""
+    if not principles:
+        return []
+
+    try:
+        from triz_agent.database.queries import query_cases
+
+        # 提取查询关键词
+        keywords = []
+        for q in queries:
+            keywords.extend(q.split())
+
+        # 查询本地案例
+        cases = query_cases(principles, limit=limit)
+        results = []
+        for c in cases:
+            results.append(
+                SearchResult(
+                    title=c.get("title", ""),
+                    snippet=c.get("description", ""),
+                    url="",
+                    source=c.get("source", "本地库") or "本地库",
+                    query=" ".join(queries),
+                )
+            )
+        return results
+    except Exception:
+        return []
 
 
 def _semantic_filter(

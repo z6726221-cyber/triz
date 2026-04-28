@@ -1327,25 +1327,25 @@ SEPARATION_RULES = [
         "id": 1,
         "type": "空间",
         "condition": "If contradictory requirements can be met in different spatial locations",
-        "principles": [1, 2, 3, 4, 7, 17, 24, 26],
+        "principles": [1, 2, 3, 4, 7, 14, 17, 24, 26, 30],
     },
     {
         "id": 2,
         "type": "时间",
         "condition": "If contradictory requirements can be met at different times",
-        "principles": [15, 19, 20, 21, 34],
+        "principles": [9, 10, 11, 15, 16, 19, 20, 21, 34, 35],
     },
     {
         "id": 3,
         "type": "条件",
         "condition": "If contradictory requirements can be met under different conditions",
-        "principles": [1, 5, 6, 22, 23, 33, 35],
+        "principles": [13, 25, 27, 28, 29, 31, 32, 35, 36, 39],
     },
     {
         "id": 4,
-        "type": "系统级别",
+        "type": "系统",
         "condition": "If contradictory requirements can be met at different system levels",
-        "principles": [5, 7, 12, 25, 27],
+        "principles": [5, 6, 8, 12, 13, 18, 22, 25, 27, 33],
     },
 ]
 

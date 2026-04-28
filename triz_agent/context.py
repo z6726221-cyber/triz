@@ -80,10 +80,15 @@ class WorkflowContext(BaseModel):
 
     # M3 输出
     problem_type: Optional[Literal["tech", "phys"]] = None
-    improve_aspect: Optional[str] = None  # 需要改善的方面
-    worsen_aspect: Optional[str] = None  # 随之恶化的方面
+    improve_aspect: Optional[str] = None  # 技术矛盾：需要改善的方面
+    worsen_aspect: Optional[str] = None  # 技术矛盾：随之恶化的方面
     contradiction_desc: str = ""  # 矛盾自然语言描述（兼容旧逻辑）
     evidence: List[str] = []  # 矛盾判定的支持证据（来自因果链）
+    # 物理矛盾专用字段
+    parameter: str = ""  # 矛盾参数（同一参数）
+    state1: str = ""  # 状态1（如"大流量"）
+    state2: str = ""  # 状态2（如"小流量"）
+    sep_type: Optional[str] = None  # 分离类型（空间/时间/条件/系统）
 
     # M4 输出
     principles: List[int] = []

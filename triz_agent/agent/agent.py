@@ -52,6 +52,7 @@ class TrizAgent:
             self.client = OpenAIClient()
         self.memory: list[dict] = []  # ReAct 记忆
         self.ctx: WorkflowContext | None = None
+        self._current_skill_allowed_tools: list[str] | None = None  # 当前 Skill 的 allowed-tools
 
     def _load_methodology(self) -> str:
         """加载 AGENT.md 方法论文档。"""
@@ -124,6 +125,8 @@ class TrizAgent:
 
                 try:
                     if is_tool:
+                        # Tool 调用不受 allowed-tools 限制，清空之前的限制
+                        self._current_skill_allowed_tools = None
                         result = self._execute_tool(name)
                         # Tool 结果以可读文本加入记忆
                         tool_text = self._format_tool_result(name, result)
@@ -238,6 +241,13 @@ class TrizAgent:
             f"当前迭代次数: {ctx.iteration}",
             f"当前反馈（如有）: {ctx.feedback or '无'}",
             "",
+            "=== 当前 ctx 状态 ===",
+            f"- sao_list: {'已填充' if ctx.sao_list else '空'}",
+            f"- principles: {ctx.principles if ctx.principles else '空'}",
+            f"- fos_report: {'已填充' if ctx.fos_report else '空'}",
+            f"- solution_drafts: {'已填充' if ctx.solution_drafts else '空'}",
+            f"- ranked_solutions: {'已填充' if ctx.ranked_solutions else '空'}",
+            "",
             "=== 已完成的分析 ===",
         ]
 
@@ -292,6 +302,11 @@ class TrizAgent:
     def _execute_skill(self, name: str) -> str:
         """执行 Agent Skill，返回 Markdown。"""
         skill = self.skill_registry.get(name)
+        allowed = skill.allowed_tools
+        if allowed:
+            self._current_skill_allowed_tools = allowed
+            self.memory.append({"role": "system", "content": f"Skill {name} 限制：{', '.join(allowed)}"})
+        
         if skill is None:
             raise ValueError(f"Skill not found: {name}")
 
@@ -301,28 +316,19 @@ class TrizAgent:
         # 执行 Skill
         markdown = skill.execute(self.ctx, context_markdown)
 
-        # post_validate（保留业务逻辑校验）
+        # post_validate 校验结果记录到记忆，由 Agent 决定是否重试
         warnings = skill.post_validate(markdown, self.ctx)
-        if warnings and len(warnings) >= 2:
-            skill._retry_hints = warnings
-            markdown = skill.execute(self.ctx, context_markdown)
-            retry_warnings = skill.post_validate(markdown, self.ctx)
-            if retry_warnings:
-                self.memory.append(
-                    {
-                        "role": "system",
-                        "content": f"{name} 重试后仍有警告: {'; '.join(retry_warnings)}",
-                    }
-                )
-        elif warnings:
+        if warnings:
             self.memory.append(
                 {
                     "role": "system",
                     "content": f"{name} 校验警告: {'; '.join(warnings)}",
                 }
             )
+            # 将警告信息传给 Skill，让 Agent 自行决定是否重试
+            skill._retry_hints = warnings
 
-        # 自动解析结构化数据（如 M3 解析矛盾参数）
+        # 自动解析结构化数据并写回 ctx
         parsed = skill.post_process(markdown)
         if parsed:
             import json
@@ -330,17 +336,47 @@ class TrizAgent:
                 "role": "system",
                 "content": f"{name} 结构化结果：{json.dumps(parsed, ensure_ascii=False)}",
             })
+            # 将解析结果写回 ctx，供后续 Tool/Skill 使用
+            if self.ctx:
+                for key, value in parsed.items():
+                    if value and hasattr(self.ctx, key):
+                        setattr(self.ctx, key, value)
 
         return markdown
 
     def _execute_tool(self, name: str) -> dict:
         """执行 Tool，返回 dict。"""
+        # 强制执行 allowed-tools
+        allowed = getattr(self, '_current_skill_allowed_tools', None)
+        if allowed:
+            if isinstance(allowed, str):
+                allowed = [a.strip() for a in allowed.split(',')]
+            elif isinstance(allowed, (list, tuple)):
+                allowed = [a.strip() if isinstance(a, str) else a for a in allowed]
+            if isinstance(name, str):
+                name = name.strip()
+            if name not in allowed:
+                err = f"Tool {name} 不在 allowed-tools 列表中（{allowed}）"
+                self.memory.append({"role": "system", "content": f"{err}"})
+                return {"error": err, "skipped": True}
+
         tool_func = self.tool_registry.get(name)
         if tool_func is None:
             raise ValueError(f"Tool not found: {name}")
-        if name == "search_patents":
+
+        # 通过注册属性判断是否需要 FOS 模式，无需硬编码工具名
+        if getattr(tool_func, "_fos_mode", False):
             return self._execute_fos(tool_func)
-        return tool_func(self.ctx)
+
+        result = tool_func(ctx=self.ctx)
+
+        # 将 Tool 返回的结构化结果写回 ctx
+        if isinstance(result, dict):
+            for key, value in result.items():
+                if value and hasattr(self.ctx, key):
+                    setattr(self.ctx, key, value)
+
+        return result
 
     def _execute_fos(self, search_patents_func: Callable[..., Any]) -> dict:
         """执行 FOS 跨界检索。"""
@@ -358,26 +394,73 @@ class TrizAgent:
             "search_queries": queries,
         }
 
-    def _generate_fos_queries(self) -> list[str]:
-        """Agent 模式下为 FOS 生成搜索词。"""
-        queries = []
-        principles = self.ctx.principles[:3]
+    def _get_principle_english_names(self, principle_ids: list[int]) -> list[str]:
+        """获取发明原理的英文名称列表。"""
+        try:
+            from triz_agent.database.queries import get_all_principles
+            all_principles = get_all_principles()
+            name_map = {p["id"]: p["name"] for p in all_principles}
+            return [name_map.get(pid, f"principle {pid}") for pid in principle_ids]
+        except Exception:
+            return [f"principle {pid}" for pid in principle_ids]
 
+    def _generate_fos_queries(self) -> list[str]:
+        """Agent 模式下为 FOS 生成英文搜索词。"""
+        principles = self.ctx.principles[:3] if self.ctx.principles else []
+        principle_names = self._get_principle_english_names(principles)
+
+        function_keywords = []
         if self.ctx.sao_list:
-            function = ""
             for sao in self.ctx.sao_list:
                 if sao.function_type == "useful":
-                    function = sao.action
-                    break
-            if function:
-                p_str = " ".join([f"principle {p}" for p in principles])
-                queries.append(f"{p_str} {function}")
+                    function_keywords.append(sao.action)
+                    function_keywords.append(sao.object)
 
+        contradiction_keywords = []
         if self.ctx.contradiction_desc:
-            queries.append(self.ctx.contradiction_desc)
+            contradiction_keywords.append(self.ctx.contradiction_desc)
+
+        context_parts = []
+        if principle_names:
+            context_parts.append("TRIZ Principles: " + ", ".join(principle_names))
+        if function_keywords:
+            context_parts.append("Functions: " + ", ".join(function_keywords[:4]))
+        if contradiction_keywords:
+            context_parts.append("Contradiction: " + contradiction_keywords[0])
+        if self.ctx.question:
+            context_parts.append(f"Problem: {self.ctx.question}")
+
+        context_text = "\n".join(context_parts)
+
+        system_prompt = """你是一个专利检索专家。根据 TRIZ 分析上下文，生成 3 个英文搜索词（短语），用于在专利数据库中搜索相关解决方案。
+
+规则：
+1. 每个搜索词 1-5 个英文单词
+2. 必须包含发明原理英文名（如 Segmentation, Preliminary action, Asymmetry 等）
+3. 必须包含功能/问题领域的英文关键词
+4. 只输出搜索词，用逗号分隔，不要解释
+
+示例输出：
+Segmentation, ink flow control
+Preliminary anti-action, temporary state change
+Local quality, non-uniform structure"""
+
+        response = self._call_llm(system_prompt, context_text)
+        # 处理换行和逗号分隔
+        lines = response.replace("\n", ",").split(",")
+        raw_queries = [q.strip() for q in lines if q.strip()]
+        queries = [q for q in raw_queries if 0 < len(q) < 80]
 
         if not queries:
-            queries.append(self.ctx.question)
+            fallback = []
+            if principle_names:
+                fallback.append(principle_names[0])
+            if function_keywords:
+                fallback.append(function_keywords[0])
+            if self.ctx.question:
+                words = [w for w in self.ctx.question.split() if len(w) > 2][:3]
+                fallback.append(" ".join(words))
+            queries = fallback
 
         return queries[:3]
 
@@ -402,16 +485,25 @@ class TrizAgent:
         if cases:
             lines.append(f"\n检索到 {len(cases)} 条案例：")
             for i, c in enumerate(cases, 1):
+                # Case 是 Pydantic 模型，用属性访问
+                title = getattr(c, 'title', str(c))
+                principle_id = getattr(c, 'principle_id', '')
+                source = getattr(c, 'source', '')
+                func = getattr(c, 'function', '')
+                desc = getattr(c, 'description', '')
                 if isinstance(c, dict):
-                    lines.append(
-                        f"{i}. **{c.get('title', '')}** (原理 {c.get('principle_id', '')})"
-                    )
-                    lines.append(
-                        f"   来源: {c.get('source', '')} | 功能: {c.get('function', '')}"
-                    )
-                    lines.append(f"   描述: {c.get('description', '')}")
-                else:
-                    lines.append(f"{i}. {c}")
+                    title = c.get('title', title)
+                    principle_id = c.get('principle_id', principle_id)
+                    source = c.get('source', source)
+                    func = c.get('function', func)
+                    desc = c.get('description', desc)
+                lines.append(
+                    f"{i}. **{title}** (原理 {principle_id})"
+                )
+                lines.append(
+                    f"   来源: {source} | 功能: {func}"
+                )
+                lines.append(f"   描述: {desc}")
 
         fos_report = result.get("fos_report")
         if fos_report and isinstance(fos_report, dict):

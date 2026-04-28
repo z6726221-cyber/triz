@@ -15,11 +15,11 @@ from triz_agent.config import (
 )
 
 _SKILL_MODEL_MAP = {
-    "m1_modeling": MODEL_M1,
-    "m2_causal": MODEL_M2,
-    "m3_formulation": MODEL_M3,
-    "m5_generation": MODEL_M5,
-    "m6_evaluation": MODEL_M6,
+    "modeling": MODEL_M1,
+    "causal": MODEL_M2,
+    "formulation": MODEL_M3,
+    "generation": MODEL_M5,
+    "evaluation": MODEL_M6,
 }
 
 
@@ -77,6 +77,7 @@ class AgentSkillRegistry:
                 "name": s.name,
                 "description": s.description,
                 "gotchas": s.gotchas,
+                "allowed_tools": s.allowed_tools,
             }
             for s in self._skills.values()
         ]

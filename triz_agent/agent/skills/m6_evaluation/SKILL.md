@@ -1,15 +1,19 @@
 ---
-name: m6_evaluation
+name: evaluation
 description: >
-  当需要评估方案质量、筛选最优解、决定是否需要迭代改进时使用。
+  独立评审方案草案，给出 8 维度量化评分和理想度，按理想度排序并给出推荐。
+  当用户说"评估方案"、"哪个方案最好"、"方案评分"、"理想度排序"、"需要迭代改进"时使用。
+  Do NOT use when：尚未生成方案（方案生成未完成），或已给出评分且用户未要求重新评估，或仅有一个方案无需排序。
+  详细评分标准见 references/scoring_rubric.md，按需使用 Read 工具读取。
 version: "1.0"
 gotchas:
   - 评分必须有区分度，不能所有方案都给 3 分
   - problem_relevance_score 必须与用户原始问题对比，而非中间矛盾描述
   - 非工程问题的 relevance_score 必须 <= 2
+allowed-tools: ["Read", "Write", "Glob", "Grep"]
 ---
 
-# M6 方案评估
+# 方案评估
 
 ## 任务
 独立评审方案草案，给出 8 维度量化评分和理想度，按理想度排序。
@@ -80,3 +84,7 @@ gotchas:
 2. **对比对象错误**：problem_relevance_score 必须与用户原始问题对比，而非中间提取的矛盾描述
 3. **非工程问题未识别**：如果用户问的是非工程问题，relevance_score 必须 <= 2
 4. **原理应用未验证**：方案说用了原理 15（动态化），但描述中没有动态调整的内容 → logical_consistency_score 应打低分
+
+## 完整输出示例
+
+如需查看完整输出示例，请使用 Read 工具读取 `references/examples.md`。
